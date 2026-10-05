@@ -1,0 +1,12 @@
+{
+  "name": "BJ Auto Offers",
+  "short_name": "BJ Offers",
+  "start_url": "./#/offers",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#e4572e",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

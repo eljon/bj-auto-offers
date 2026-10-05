@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Only the Google accounts listed below can read or write anything.
+// Replace the example address with your own (and add colleagues), then publish:
+//   Firebase console > Firestore Database > Rules, or `firebase deploy --only firestore:rules`
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isTeam() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          'you@example.com'
+        ];
+    }
+
+    match /items/{id} {
+      allow read, write: if isTeam();
+    }
+    match /offers/{id} {
+      allow read, write: if isTeam();
+    }
+    match /meta/{id} {
+      allow read, write: if isTeam();
+    }
+  }
+}
