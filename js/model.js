@@ -1,7 +1,7 @@
 // Offer / price list document shape and calculations.
 import * as store from './store.js';
 import { state } from './state.js';
-import { todayISO, round2 } from './ui.js';
+import { todayISO, round2, CURRENCY } from './ui.js';
 
 export const KIND_LABEL = { offer: 'Offer', pricelist: 'Price list' };
 export const STATUSES = ['draft', 'sent', 'accepted', 'rejected'];
@@ -54,6 +54,7 @@ export function normalizeOffer(o) {
   return {
     ...o,
     kind: o.kind === 'pricelist' ? 'pricelist' : 'offer',
+    currency: CURRENCY,
     client: { name: '', company: '', details: '', ...(o.client || {}) },
     lines: (o.lines || []).map((l) => ({ qty: 1, discount: 0, unit: 'pcs', ...l, id: l.id || store.uid() })),
     design: { ...DEFAULT_DESIGN, ...(o.design || {}) },
@@ -90,7 +91,7 @@ export function newOffer(kind) {
     client: { name: '', company: '', details: '' },
     lines: [],
     notes: s.terms || '',
-    currency: s.currency || 'EUR',
+    currency: CURRENCY,
     vatRate: Number(s.vatRate) || 0,
     status: 'draft',
     total: 0,

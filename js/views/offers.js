@@ -65,7 +65,7 @@ export function mount(root) {
           <p class="muted small">${who ? esc(who) : '&nbsp;'}</p>
           <div class="oc-line">
             <span class="muted small">${esc(fmtDate(o.date))} &middot; ${o.lines.length} item${o.lines.length === 1 ? '' : 's'}</span>
-            ${o.kind === 'offer' ? `<b>${esc(money(o.total, o.currency))}</b>` : ''}
+            ${o.kind === 'offer' ? `<b>${esc(money(o.total))}</b>` : ''}
           </div>
         </div>
         <div class="oc-actions">

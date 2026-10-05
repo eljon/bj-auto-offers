@@ -77,21 +77,10 @@ export function parseNum(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-const moneyFmts = new Map();
-export function money(n, currency = 'EUR') {
-  const cur = String(currency || 'EUR').toUpperCase();
-  let f = moneyFmts.get(cur);
-  if (!f) {
-    try {
-      f = new Intl.NumberFormat(undefined, { style: 'currency', currency: cur });
-    } catch {
-      const plain = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      f = { format: (v) => `${plain.format(v)} ${cur}` };
-    }
-    moneyFmts.set(cur, f);
-  }
-  return f.format(Number(n) || 0);
-}
+// All prices are Philippine pesos.
+export const CURRENCY = 'PHP';
+const pesoFmt = new Intl.NumberFormat('en-PH', { style: 'currency', currency: CURRENCY });
+export const money = (n) => pesoFmt.format(Number(n) || 0);
 
 const numFmt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
 export const num = (n) => numFmt.format(Number(n) || 0);

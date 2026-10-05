@@ -13,7 +13,6 @@ import { filterItems, openItemForm } from './items.js';
 
 const PAGE_W = 794; // A4 width at 96 dpi
 const PICK_LIMIT = 150;
-const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'ALL', 'MKD', 'RSD', 'BAM', 'HUF', 'PLN', 'CZK', 'RON', 'BGN', 'TRY', 'SEK', 'NOK', 'DKK'];
 
 export function mount(root, id) {
   let offer = null;
@@ -86,7 +85,6 @@ export function mount(root, id) {
   const selbar = $('[data-selbar]');
   const titleIn = $('[data-title]');
   const isMobile = () => window.matchMedia('(max-width: 899px)').matches;
-  const cur = () => offer.currency || state.settings.currency;
 
   // ---------- saving & history ----------
 
@@ -169,10 +167,10 @@ export function mount(root, id) {
   function updateTotals() {
     for (const el of host.querySelectorAll('[data-lt]')) {
       const l = offer.lines.find((x) => x.id === el.dataset.lt);
-      if (l) el.textContent = money(lineTotal(l), cur());
+      if (l) el.textContent = money(lineTotal(l));
     }
     const t = totals(offer);
-    for (const el of host.querySelectorAll('[data-t]')) el.textContent = money(t[el.dataset.t], cur());
+    for (const el of host.querySelectorAll('[data-t]')) el.textContent = money(t[el.dataset.t]);
   }
 
   function applyZoom() {
@@ -281,11 +279,8 @@ export function mount(root, id) {
         <label>Contact person<input data-bind="client.name" autocomplete="off"></label>
         <label>Details<textarea data-bind="client.details" rows="3" placeholder="Address, phone, email"></textarea></label>
         <h4>Pricing</h4>
-        <div class="row2">
-          <label>Currency<input data-bind="currency" data-upper list="dl-cur" maxlength="3" autocomplete="off"></label>
-          <label>VAT %<input data-bind="vatRate" data-num inputmode="decimal"></label>
-        </div>
-        <datalist id="dl-cur">${CURRENCIES.map((c) => `<option value="${c}">`).join('')}</datalist>
+        <p class="muted small">All prices are in Philippine pesos (₱).</p>
+        <label>VAT %<input data-bind="vatRate" data-num inputmode="decimal"></label>
         <label class="check"><input type="checkbox" data-bind="design.showVat"> ${isOffer ? 'Show subtotal and VAT' : 'Note that prices exclude VAT'}</label>
         ${isOffer ? '<label class="check"><input type="checkbox" data-bind="design.showDiscount"> Discount column</label>' : ''}
         <div class="row2">
@@ -359,7 +354,7 @@ export function mount(root, id) {
         ${i.image ? `<img class="pick-img" src="${esc(i.image)}" alt="" loading="lazy">` : '<span class="pick-img"></span>'}
         <span class="pick-main"><span class="pick-desc">${esc(i.description)}</span>
           <small class="muted">${esc([i.type, i.code, i.brand].filter(Boolean).join(' · '))}</small></span>
-        <span class="pick-price">${esc(money(i.price, cur()))}</span>
+        <span class="pick-price">${esc(money(i.price))}</span>
         <span class="pick-add">${inOffer.has(i.id) ? (offer.kind === 'offer' ? `&times;${inOffer.get(i.id)}` : icon('check')) : icon('plus')}</span>
       </button>`).join('')
       + (items.length > PICK_LIMIT ? `<div class="empty">${items.length - PICK_LIMIT} more. Refine the search.</div>` : '')
@@ -571,7 +566,7 @@ export function mount(root, id) {
     const t = e.target;
     if (t.matches('input[data-fmt]')) {
       const l = offer.lines.find((x) => x.id === t.dataset.line);
-      if (l) t.value = formatField(t.dataset.fmt, l[t.dataset.field], cur());
+      if (l) t.value = formatField(t.dataset.fmt, l[t.dataset.field]);
       return;
     }
     if (t.isContentEditable) {

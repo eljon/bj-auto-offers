@@ -40,7 +40,6 @@ export function mount(root) {
         <section class="card">
           <h2>Defaults for new documents</h2>
           <div class="form-grid">
-            <label>Currency<input name="currency" maxlength="3" value="${esc(s.currency)}"></label>
             <label>VAT %<input name="vatRate" inputmode="decimal" value="${esc(s.vatRate)}"></label>
             <label>Number prefix<input name="numberPrefix" value="${esc(s.numberPrefix)}"></label>
             <label>Next number<input name="nextNumber" inputmode="numeric" value="${esc(s.nextNumber)}"></label>
@@ -137,7 +136,7 @@ export function mount(root) {
       ...state.settings,
       company: { name: f.name, tagline: f.tagline, address: f.address, phone: f.phone, email: f.email, website: f.website, taxId: f.taxId },
       logo,
-      currency: (f.currency || 'EUR').toUpperCase().trim(),
+      currency: 'PHP',
       vatRate: parseNum(f.vatRate),
       numberPrefix: f.numberPrefix,
       nextNumber: Math.max(1, Math.floor(parseNum(f.nextNumber)) || 1),

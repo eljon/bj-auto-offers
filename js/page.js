@@ -18,8 +18,8 @@ export function groupLines(lines, byType) {
   return [...groups].map(([type, ls]) => ({ type, lines: ls }));
 }
 
-export function formatField(fmt, value, currency) {
-  if (fmt === 'money') return money(value, currency);
+export function formatField(fmt, value) {
+  if (fmt === 'money') return money(value);
   if (fmt === 'pct') return `${num(value)}%`;
   return num(value);
 }
@@ -32,7 +32,6 @@ export function renderPage(o, s, { interactive = false, selected = null, images 
   const tpl = TEMPLATE_KEYS.includes(d.template) ? d.template : 'classic';
   const catalog = tpl === 'catalog';
   const isOffer = o.kind === 'offer';
-  const cur = o.currency || s.currency;
   const c = s.company;
 
   const editable = (attrs, text, placeholder, cls, single) =>
@@ -47,7 +46,7 @@ export function renderPage(o, s, { interactive = false, selected = null, images 
       ? editable(`data-line="${l.id}" data-field="${field}"`, l[field], placeholder, cls, single)
       : `<div class="${cls}">${esc(l[field])}</div>`;
   const lnum = (l, field, fmt, cls = '') => {
-    const text = formatField(fmt, l[field], cur);
+    const text = formatField(fmt, l[field]);
     if (!interactive) return `<span class="${cls}">${fmt === 'pct' && !Number(l[field]) ? '' : esc(text)}</span>`;
     return `<input class="num-in ${cls}" inputmode="decimal" autocomplete="off" enterkeyhint="done" aria-label="${field}"
       data-line="${l.id}" data-field="${field}" data-fmt="${fmt}" value="${esc(text)}">`;
@@ -118,7 +117,7 @@ export function renderPage(o, s, { interactive = false, selected = null, images 
         <td class="cat-desc">${led(l, 'description', 'Application')}</td>
         ${isOffer ? `<td class="cat-qty">${lnum(l, 'qty', 'qty')}<span>${esc(l.unit || 'pcs')}</span></td>` : ''}
         <td class="cat-price">${lnum(l, 'price', 'money')}</td>
-        ${isOffer ? `<td class="cat-total" data-lt="${l.id}">${esc(money(lineTotal(l), cur))}</td>` : ''}
+        ${isOffer ? `<td class="cat-total" data-lt="${l.id}">${esc(money(lineTotal(l)))}</td>` : ''}
       </tr>`;
     lines = `<table class="cat-table"><tbody>${groups.map((g) =>
       (g.type ? `<tr class="cat-grp"><td colspan="${cols}">${esc(g.type)}</td></tr>` : '') + g.lines.map(row).join(''),
@@ -134,7 +133,7 @@ export function renderPage(o, s, { interactive = false, selected = null, images 
           ${isOffer ? `<div class="pc-qty">${lnum(l, 'qty', 'qty')}<span>&times;</span></div>` : ''}
           <div class="pc-price">${lnum(l, 'price', 'money')}<span class="pc-unit">/ ${esc(l.unit || 'pcs')}</span></div>
         </div>
-        ${isOffer ? `<div class="pc-total"><span>${showDisc && Number(l.discount) ? `-${num(l.discount)}%` : 'Total'}</span><b data-lt="${l.id}">${esc(money(lineTotal(l), cur))}</b></div>` : ''}
+        ${isOffer ? `<div class="pc-total"><span>${showDisc && Number(l.discount) ? `-${num(l.discount)}%` : 'Total'}</span><b data-lt="${l.id}">${esc(money(lineTotal(l)))}</b></div>` : ''}
       </div>`;
     lines = `<section class="pg-cards">${groups.map((g) =>
       (g.type ? `<h3 class="pg-group">${esc(g.type)}</h3>` : '') + `<div class="pg-card-grid">${g.lines.map(card).join('')}</div>`,
@@ -149,7 +148,7 @@ export function renderPage(o, s, { interactive = false, selected = null, images 
         <td class="c-unit">${led(l, 'unit', 'unit', '', true)}</td>
         <td class="c-price num">${lnum(l, 'price', 'money')}</td>
         ${showDisc ? `<td class="c-disc num">${lnum(l, 'discount', 'pct')}</td>` : ''}
-        ${isOffer ? `<td class="c-total num" data-lt="${l.id}">${esc(money(lineTotal(l), cur))}</td>` : ''}
+        ${isOffer ? `<td class="c-total num" data-lt="${l.id}">${esc(money(lineTotal(l)))}</td>` : ''}
       </tr>`;
     lines = `<table class="pg-table">
       <thead><tr>
@@ -172,13 +171,13 @@ export function renderPage(o, s, { interactive = false, selected = null, images 
   const t = totals(o);
   const sums = isOffer && o.lines.length
     ? `<section class="pg-totals">
-        ${d.showVat ? `<div><span>Subtotal</span><b data-t="subtotal">${esc(money(t.subtotal, cur))}</b></div>
-        <div><span>VAT ${esc(num(o.vatRate))}%</span><b data-t="vat">${esc(money(t.vat, cur))}</b></div>` : ''}
-        <div class="grand"><span>Total</span><b data-t="total">${esc(money(t.total, cur))}</b></div>
+        ${d.showVat ? `<div><span>Subtotal</span><b data-t="subtotal">${esc(money(t.subtotal))}</b></div>
+        <div><span>VAT ${esc(num(o.vatRate))}%</span><b data-t="vat">${esc(money(t.vat))}</b></div>` : ''}
+        <div class="grand"><span>Total</span><b data-t="total">${esc(money(t.total))}</b></div>
       </section>`
     : '';
   const priceNote = !isOffer && o.lines.length && (!catalog || d.showVat)
-    ? `<p class="pg-pricenote">Prices in ${esc(String(cur).toUpperCase())}${d.showVat ? `, excluding ${esc(num(o.vatRate))}% VAT` : ''}.</p>`
+    ? `<p class="pg-pricenote">Prices in pesos${d.showVat ? `, excluding ${esc(num(o.vatRate))}% VAT` : ''}.</p>`
     : '';
 
   const notes = interactive || String(o.notes || '').trim()

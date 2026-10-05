@@ -24,6 +24,7 @@ export const DEFAULT_SETTINGS = {
 export const mergeSettings = (doc = {}) => ({
   ...DEFAULT_SETTINGS,
   ...doc,
+  currency: 'PHP',
   company: { ...DEFAULT_SETTINGS.company, ...(doc.company || {}) },
 });
 

@@ -1,7 +1,7 @@
 # BJ Auto Offers
 
 A web app for building **offers** and **price lists** for auto parts, on top of a shared **item database**
-(product type, code, brand, description, unit, price). Documents are designed on an A4 canvas, edited in place,
+(product type, code, brand, description, unit, price). All prices are in Philippine pesos (₱). Documents are designed on an A4 canvas, edited in place,
 and exported to PDF from the browser. Works on desktop and phones, hosted on GitHub Pages, data in Cloud Firestore.
 
 No build step: plain HTML, CSS and JavaScript modules.
@@ -18,7 +18,7 @@ No build step: plain HTML, CSS and JavaScript modules.
   company and brand logos, slab title, photo table with a colored price column, prints edge to edge), table or card layout, accent colors, fonts,
   toggles for logo, codes, types, brands and grouping.
 - **PDF / Print**: only the page is printed, A4, with repeating table headers.
-- **Settings**: company profile and logo, default currency, VAT, numbering, template and terms, JSON backup and restore.
+- **Settings**: company profile and logo, default VAT, numbering, template and terms, JSON backup and restore.
 - Live sync between devices, offline cache (Firestore persistence), optional Google sign-in restricted to an allow list.
 
 ## Try it locally

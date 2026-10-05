@@ -46,7 +46,7 @@ export function openItemForm(item = null, { onSaved } = {}) {
       <label class="span2">Application / description<textarea name="description" rows="3" required>${esc(it.description)}</textarea></label>
       <label>Brand<input name="brand" list="dl-brands" autocomplete="off" value="${esc(it.brand)}"></label>
       <label>Unit<input name="unit" list="dl-units" autocomplete="off" value="${esc(it.unit)}"></label>
-      <label>Price (${esc(state.settings.currency)})<input name="price" inputmode="decimal" required autocomplete="off" value="${esc(it.price)}"></label>
+      <label>Price (₱)<input name="price" inputmode="decimal" required autocomplete="off" value="${esc(it.price)}"></label>
       ${isNew ? '<label class="check span2"><input type="checkbox" name="again"> Add another after saving</label>' : ''}
     </div>
     <datalist id="dl-types">${itemTypes().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
@@ -244,7 +244,6 @@ export function mount(root) {
   };
 
   const render = () => {
-    const cur = state.settings.currency;
     shown = filterItems(state.items, q, type);
     const by = {
       type: (a, b) => (a.type || '').localeCompare(b.type || '') || (a.description || '').localeCompare(b.description || ''),
@@ -275,7 +274,7 @@ export function mount(root) {
         <span class="ir-code mono">${esc(i.code)}</span>
         <span class="ir-desc">${esc(i.description)}</span>
         <span class="ir-brand muted">${esc(i.brand)}</span>
-        <span class="ir-price num"><b>${esc(money(i.price, cur))}</b><small class="muted"> / ${esc(i.unit || 'pcs')}</small></span>
+        <span class="ir-price num"><b>${esc(money(i.price))}</b><small class="muted"> / ${esc(i.unit || 'pcs')}</small></span>
         <span class="ir-actions">
           <button class="icon-btn" data-dup="${esc(i.id)}" title="Duplicate" aria-label="Duplicate">${icon('copy')}</button>
           <button class="icon-btn" data-del="${esc(i.id)}" title="Delete" aria-label="Delete">${icon('trash')}</button>
