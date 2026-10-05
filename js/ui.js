@@ -219,7 +219,7 @@ export const readFile = (file) => new Promise((resolve, reject) => {
 });
 
 /** Downscales an image file to a data URL small enough to live inside a Firestore document. */
-export function imageToDataURL(file, maxSize = 480) {
+export function imageToDataURL(file, maxSize = 480, type = 'image/png') {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -227,9 +227,11 @@ export function imageToDataURL(file, maxSize = 480) {
       const c = document.createElement('canvas');
       c.width = Math.round(img.width * scale);
       c.height = Math.round(img.height * scale);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const ctx = c.getContext('2d');
+      if (type === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+      ctx.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(img.src);
-      resolve(c.toDataURL('image/png'));
+      resolve(c.toDataURL(type, 0.82));
     };
     img.onerror = () => reject(new Error('Could not read that image.'));
     img.src = URL.createObjectURL(file);

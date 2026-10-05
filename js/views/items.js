@@ -2,7 +2,7 @@
 import * as store from '../store.js';
 import { state, onChange, itemTypes } from '../state.js';
 import {
-  esc, icon, money, modal, confirmDialog, toast, parseNum, round2, parseCSV, toCSV, download, readFile,
+  esc, icon, money, modal, confirmDialog, toast, parseNum, round2, parseCSV, toCSV, download, readFile, imageToDataURL,
 } from '../ui.js';
 import { SAMPLE_ITEMS } from '../sample.js';
 
@@ -29,13 +29,21 @@ export function filterItems(items, q, type) {
 
 export function openItemForm(item = null, { onSaved } = {}) {
   const isNew = !item?.id;
-  const it = { type: '', code: '', brand: '', description: '', unit: 'pcs', price: '', ...(item || {}) };
+  const it = { type: '', code: '', brand: '', description: '', unit: 'pcs', price: '', image: '', ...(item || {}) };
+  let image = it.image || '';
+  const preview = () => (image ? `<img src="${esc(image)}" alt="">` : `${icon('upload')}<span>Add photo</span>`);
   modal({
     title: isNew ? 'New item' : 'Edit item',
     body: `<div class="form-grid">
-      <label>Product type<input name="type" list="dl-types" required autocomplete="off" value="${esc(it.type)}" placeholder="e.g. Brake pads"></label>
-      <label>Code / part no.<input name="code" autocomplete="off" value="${esc(it.code)}"></label>
-      <label class="span2">Description<textarea name="description" rows="3" required>${esc(it.description)}</textarea></label>
+      <div class="photo-field span2">
+        <label class="photo-drop" title="Product photo">${preview()}<input type="file" accept="image/*" data-photo hidden></label>
+        <div class="photo-side">
+          <label>Item name / product type<input name="type" list="dl-types" required autocomplete="off" value="${esc(it.type)}" placeholder="e.g. Transmission filter"></label>
+          <button type="button" class="btn small ghost" data-rm-photo ${image ? '' : 'hidden'}>Remove photo</button>
+        </div>
+      </div>
+      <label>Part number<input name="code" autocomplete="off" value="${esc(it.code)}"></label>
+      <label class="span2">Application / description<textarea name="description" rows="3" required>${esc(it.description)}</textarea></label>
       <label>Brand<input name="brand" list="dl-brands" autocomplete="off" value="${esc(it.brand)}"></label>
       <label>Unit<input name="unit" list="dl-units" autocomplete="off" value="${esc(it.unit)}"></label>
       <label>Price (${esc(state.settings.currency)})<input name="price" inputmode="decimal" required autocomplete="off" value="${esc(it.price)}"></label>
@@ -44,7 +52,21 @@ export function openItemForm(item = null, { onSaved } = {}) {
     <datalist id="dl-types">${itemTypes().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
     <datalist id="dl-brands">${[...new Set(state.items.map((i) => i.brand).filter(Boolean))].sort().map((b) => `<option value="${esc(b)}">`).join('')}</datalist>
     <datalist id="dl-units"><option value="pcs"><option value="set"><option value="pair"><option value="l"><option value="kg"><option value="m"></datalist>`,
-    onMount: (dlg) => dlg.querySelector(isNew && !it.type ? '[name=type]' : '[name=description]').focus(),
+    onMount: (dlg) => {
+      dlg.querySelector(isNew && !it.type ? '[name=type]' : '[name=description]').focus();
+      const drop = dlg.querySelector('.photo-drop');
+      const rm = dlg.querySelector('[data-rm-photo]');
+      const refresh = () => {
+        drop.innerHTML = preview() + '<input type="file" accept="image/*" data-photo hidden>';
+        rm.hidden = !image;
+      };
+      dlg.addEventListener('change', async (e) => {
+        if (!e.target.matches('[data-photo]') || !e.target.files[0]) return;
+        try { image = await imageToDataURL(e.target.files[0], 400, 'image/jpeg'); refresh(); } catch (err) { toast(err.message, 'error'); }
+      });
+      rm.addEventListener('click', () => { image = ''; refresh(); });
+      dlg._resetPhoto = () => { image = ''; refresh(); };
+    },
     onSubmit: (form) => {
       const f = Object.fromEntries(new FormData(form));
       const data = {
@@ -54,6 +76,7 @@ export function openItemForm(item = null, { onSaved } = {}) {
         description: f.description.trim(),
         unit: f.unit.trim() || 'pcs',
         price: round2(parseNum(f.price)),
+        image,
         createdAt: item?.createdAt || Date.now(),
         updatedAt: Date.now(),
       };
@@ -64,6 +87,7 @@ export function openItemForm(item = null, { onSaved } = {}) {
       toast(isNew ? 'Item added' : 'Item saved');
       if (isNew && f.again) {
         form.reset();
+        form.closest('dialog')._resetPhoto();
         form.type.value = data.type;
         form.unit.value = data.unit;
         form.brand.value = data.brand;
@@ -244,8 +268,9 @@ export function mount(root) {
     }
     if (!shown.length) { list.innerHTML = '<div class="empty">No items match.</div>'; return; }
 
-    list.innerHTML = `<div class="item-row head"><span>Type</span><span>Code</span><span>Description</span><span>Brand</span><span class="num">Price</span><span></span></div>`
+    list.innerHTML = `<div class="item-row head"><span></span><span>Item</span><span>Part no.</span><span>Application</span><span>Brand</span><span class="num">Price</span><span></span></div>`
       + shown.slice(0, MAX_ROWS).map((i) => `<div class="item-row" data-edit="${esc(i.id)}" tabindex="0">
+        <span class="ir-img">${i.image ? `<img src="${esc(i.image)}" alt="" loading="lazy">` : ''}</span>
         <span class="ir-type"><span class="pill">${esc(i.type || 'No type')}</span></span>
         <span class="ir-code mono">${esc(i.code)}</span>
         <span class="ir-desc">${esc(i.description)}</span>

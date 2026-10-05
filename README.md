@@ -8,13 +8,14 @@ No build step: plain HTML, CSS and JavaScript modules.
 
 ## Features
 
-- **Item database**: search, filter by product type, sort, add/edit/duplicate/delete, CSV import (Excel friendly,
+- **Item database** with product photos: search, filter by product type, sort, add/edit/duplicate/delete, CSV import (Excel friendly,
   comma/semicolon/tab, updates existing items by code) and CSV export, bulk price adjustment by percentage with rounding.
 - **Canvas editor**: A4 page with zoom, click any text on the page to edit it, edit quantities, prices and
   discounts directly in the table, select a line to move, duplicate, remove, or save it to the database. Undo/redo.
 - **Two document kinds**: offers (quantities, discounts, subtotal, VAT, total, customer block) and price lists
   (grouped by product type, no quantities).
-- **Design panel**: Classic, Bold and Minimal templates, table or card layout, accent colors, fonts,
+- **Design panel**: Classic, Bold, Minimal and **Parts Catalog** templates (Parts Catalog: slanted header band,
+  company and brand logos, slab title, photo table with a colored price column, prints edge to edge), table or card layout, accent colors, fonts,
   toggles for logo, codes, types, brands and grouping.
 - **PDF / Print**: only the page is printed, A4, with repeating table headers.
 - **Settings**: company profile and logo, default currency, VAT, numbering, template and terms, JSON backup and restore.
@@ -68,12 +69,12 @@ To move data from demo mode: Settings > Download backup while in demo mode, then
 
 | Collection | Document | Fields |
 | --- | --- | --- |
-| `items` | auto id | `type`, `code`, `brand`, `description`, `unit`, `price`, `createdAt`, `updatedAt` |
+| `items` | auto id | `type` (item name), `code` (part number), `brand`, `description` (application), `unit`, `price`, `image` (JPEG data URL), `createdAt`, `updatedAt` |
 | `offers` | auto id | `kind` (`offer` / `pricelist`), `title`, `number`, `date`, `validDays`, `status`, `intro`, `client {company, name, details}`, `lines[]`, `notes`, `currency`, `vatRate`, `design {...}`, `total`, `createdAt`, `updatedAt` |
 | `meta` | `settings` | company profile, `logo` (data URL), defaults, `nextNumber` |
 
 Offer lines copy the item's data when added, so changing a price in the database does not silently change
-documents already sent. Use **Details > Update prices** in the editor to pull current prices.
+documents already sent. Photos are not copied: lines show the item's current photo. Use **Details > Update prices** in the editor to pull current prices.
 
 ## CSV format
 

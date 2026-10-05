@@ -3,7 +3,7 @@ import * as store from '../store.js';
 import { state, onChange } from '../state.js';
 import { esc, icon, money, fmtDate, confirmDialog, toast } from '../ui.js';
 import { KIND_LABEL, newOffer, createOffer, duplicateOffer, normalizeOffer } from '../model.js';
-import { renderPage } from '../page.js';
+import { renderPage, imageMap } from '../page.js';
 
 export function mount(root) {
   let q = '';
@@ -53,11 +53,12 @@ export function mount(root) {
             <button class="btn primary" data-new="offer">New offer</button></div></div>`;
       return;
     }
+    const images = imageMap(state.items);
     list.innerHTML = rows.map((raw) => {
       const o = normalizeOffer(raw);
       const who = o.client.company || o.client.name;
       return `<article class="offer-card" data-open="${esc(o.id)}" tabindex="0">
-        <div class="oc-thumb"><div class="oc-page">${renderPage(o, state.settings)}</div></div>
+        <div class="oc-thumb"><div class="oc-page">${renderPage(o, state.settings, { images })}</div></div>
         <div class="oc-body">
           <div class="oc-line"><span class="pill kind-${o.kind}">${KIND_LABEL[o.kind]}</span><span class="muted small">${esc(o.number)}</span></div>
           <h3>${esc(o.title || 'Untitled')}</h3>
@@ -117,5 +118,5 @@ export function mount(root) {
   root.querySelector('[data-q]').addEventListener('input', (e) => { q = e.target.value; render(); });
 
   render();
-  return onChange((what) => { if (what === 'offers' || what === 'settings') render(); });
+  return onChange((what) => { if (what === 'offers' || what === 'settings' || what === 'items') render(); });
 }

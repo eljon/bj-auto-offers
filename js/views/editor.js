@@ -2,13 +2,13 @@
 import * as store from '../store.js';
 import { state, onChange, itemTypes } from '../state.js';
 import {
-  esc, icon, money, toast, debounce, parseNum, round2, getPath, setPath, confirmDialog,
+  esc, icon, money, toast, debounce, parseNum, round2, getPath, setPath, confirmDialog, imageToDataURL,
 } from '../ui.js';
 import {
   KIND_LABEL, STATUSES, FONTS, TEMPLATES, SWATCHES, normalizeOffer, lineFromItem, blankLine,
-  lineTotal, totals, duplicateOffer,
+  lineTotal, totals, duplicateOffer, CATALOG_PRESET,
 } from '../model.js';
-import { renderPage, formatField } from '../page.js';
+import { renderPage, formatField, imageMap } from '../page.js';
 import { filterItems, openItemForm } from './items.js';
 
 const PAGE_W = 794; // A4 width at 96 dpi
@@ -154,8 +154,13 @@ export function mount(root, id) {
 
   // ---------- page rendering ----------
 
+  // Parts Catalog prints edge to edge like a flyer; other templates keep normal paper margins.
+  const pageStyle = document.createElement('style');
+  document.head.append(pageStyle);
+
   function renderAll() {
-    host.innerHTML = renderPage(offer, state.settings, { interactive: true, selected });
+    pageStyle.textContent = offer.design.template === 'catalog' ? '@page { margin: 0 0 8mm; }' : '';
+    host.innerHTML = renderPage(offer, state.settings, { interactive: true, selected, images: imageMap(state.items) });
     titleIn.value = offer.title || '';
     applyZoom();
     syncSelection();
@@ -306,6 +311,13 @@ export function mount(root, id) {
         <button data-layout="table" class="${d.layout === 'table' ? 'active' : ''}">${icon('list')} Table</button>
         <button data-layout="cards" class="${d.layout === 'cards' ? 'active' : ''}">${icon('grid')} Cards</button>
       </div>
+      ${d.template === 'catalog' ? `<h4>Brand logo</h4>
+      <div class="brandlogo-row">
+        <div class="logo-prev">${d.brandLogo ? `<img src="${esc(d.brandLogo)}" alt="Brand logo">` : '<span class="muted small">None</span>'}</div>
+        <label class="btn small">${icon('upload')}<span>Upload</span><input type="file" accept="image/*" data-brandlogo hidden></label>
+        ${d.brandLogo ? `<button class="btn small ghost" data-act="rm-brandlogo">Remove</button>` : ''}
+      </div>
+      <p class="muted small">Shown under your company logo, e.g. the product brand.</p>` : ''}
       <h4>Accent color</h4>
       <div class="swatches">${SWATCHES.map((c) => `<button class="swatch ${d.accent.toLowerCase() === c ? 'active' : ''}" style="--c:${c}" data-accent="${c}" aria-label="${c}"></button>`).join('')}
         <label class="swatch custom" title="Custom color"><input type="color" data-bind="design.accent" aria-label="Custom color"></label></div>
@@ -313,6 +325,7 @@ export function mount(root, id) {
       <select data-bind="design.font">${Object.keys(FONTS).map((f) => `<option style="font-family:${esc(FONTS[f])}">${esc(f)}</option>`).join('')}</select>
       <h4>Show on page</h4>
       <label class="check"><input type="checkbox" data-bind="design.showLogo"> Company logo</label>
+      ${d.template === 'catalog' ? '' : '<label class="check"><input type="checkbox" data-bind="design.showImage"> Product photos</label>'}
       <label class="check"><input type="checkbox" data-bind="design.showCode"> Part code</label>
       <label class="check"><input type="checkbox" data-bind="design.showType"> Product type</label>
       <label class="check"><input type="checkbox" data-bind="design.showBrand"> Brand</label>
@@ -343,6 +356,7 @@ export function mount(root, id) {
       return;
     }
     box.innerHTML = items.slice(0, PICK_LIMIT).map((i) => `<button class="pick ${inOffer.has(i.id) ? 'in' : ''}" data-add="${esc(i.id)}">
+        ${i.image ? `<img class="pick-img" src="${esc(i.image)}" alt="" loading="lazy">` : '<span class="pick-img"></span>'}
         <span class="pick-main"><span class="pick-desc">${esc(i.description)}</span>
           <small class="muted">${esc([i.type, i.code, i.brand].filter(Boolean).join(' · '))}</small></span>
         <span class="pick-price">${esc(money(i.price, cur()))}</span>
@@ -402,7 +416,13 @@ export function mount(root, id) {
       return;
     }
     const tpl = t.closest('[data-tpl]');
-    if (tpl) { offer.design.template = tpl.dataset.tpl; renderAll(); renderPanel(); changed(); return; }
+    if (tpl) {
+      const was = offer.design.template;
+      offer.design.template = tpl.dataset.tpl;
+      if (tpl.dataset.tpl === 'catalog' && was !== 'catalog') Object.assign(offer.design, CATALOG_PRESET);
+      renderAll(); renderPanel(); changed();
+      return;
+    }
     const layout = t.closest('[data-layout]');
     if (layout) { offer.design.layout = layout.dataset.layout; renderAll(); renderPanel(); changed(); return; }
     const accent = t.closest('[data-accent]');
@@ -423,6 +443,7 @@ export function mount(root, id) {
 
   async function handleAction(act) {
     if (act === 'close-sheet') { editorEl.classList.remove('sheet-open'); return; }
+    if (act === 'rm-brandlogo') { offer.design.brandLogo = ''; renderAll(); renderPanel(); changed(); return; }
     if (act === 'undo') return undo();
     if (act === 'redo') return redo();
     if (act === 'print') {
@@ -516,6 +537,15 @@ export function mount(root, id) {
     changed();
   };
   panelBody.addEventListener('input', onPanelInput);
+  panelBody.addEventListener('change', async (e) => {
+    if (!e.target.matches('[data-brandlogo]')) return;
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      offer.design.brandLogo = await imageToDataURL(file, 480);
+      renderAll(); renderPanel(); changed();
+    } catch (err) { toast(err.message, 'error'); }
+  });
 
   titleIn.addEventListener('input', () => {
     offer.title = titleIn.value;
@@ -642,7 +672,10 @@ export function mount(root, id) {
   if (!tryLoad()) unsub = onChange((w) => { if (w === 'offers' && tryLoad()) { unsub(); unsub = null; } });
   const unsubItems = onChange((w) => {
     if (!offer) return;
-    if (w === 'items' && panel === 'items') renderPickList();
+    if (w === 'items') {
+      if (panel === 'items') renderPickList();
+      renderAll();
+    }
     if (w === 'settings') renderAll();
   });
 
@@ -651,6 +684,7 @@ export function mount(root, id) {
     unsub?.();
     unsubItems();
     ro.disconnect();
+    pageStyle.remove();
     document.removeEventListener('keydown', onKey);
     window.removeEventListener('pagehide', onHide);
   };

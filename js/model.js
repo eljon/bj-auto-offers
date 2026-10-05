@@ -17,9 +17,13 @@ export const TEMPLATES = [
   ['classic', 'Classic'],
   ['bold', 'Bold'],
   ['minimal', 'Minimal'],
+  ['catalog', 'Parts Catalog'],
 ];
 
-export const SWATCHES = ['#e4572e', '#d92d20', '#f79009', '#12b76a', '#0e9384', '#1570ef', '#2e3a8c', '#7a5af8', '#c11574', '#1d2939'];
+// Applied when the Parts Catalog template is picked: photo table, blue price column, slab title.
+export const CATALOG_PRESET = { font: 'Poppins', accent: '#1f4ea8', layout: 'table', showImage: true };
+
+export const SWATCHES = ['#1f4ea8', '#e4572e', '#d92d20', '#f79009', '#12b76a', '#0e9384', '#1570ef', '#2e3a8c', '#7a5af8', '#c11574', '#1d2939'];
 
 export const DEFAULT_DESIGN = {
   template: 'classic',
@@ -34,6 +38,8 @@ export const DEFAULT_DESIGN = {
   groupByType: false,
   showClient: true,
   showLogo: true,
+  showImage: false,
+  brandLogo: '',
 };
 
 export const lineTotal = (l) => (Number(l.price) || 0) * (Number(l.qty) || 0) * (1 - (Number(l.discount) || 0) / 100);
@@ -96,6 +102,7 @@ export function newOffer(kind) {
       showVat: isOffer,
       showClient: isOffer,
       groupByType: !isOffer,
+      ...(s.template === 'catalog' ? { ...CATALOG_PRESET, accent: s.accent } : {}),
     },
   };
 }

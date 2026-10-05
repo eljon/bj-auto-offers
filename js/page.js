@@ -1,7 +1,9 @@
 // Renders an offer / price list as an A4 "canvas" page.
 // interactive=true adds inline editing hooks used by the editor; false is used for thumbnails.
 import { esc, money, num, fmtDate, addDays } from './ui.js';
-import { FONTS, KIND_LABEL, lineTotal, totals } from './model.js';
+import { FONTS, KIND_LABEL, TEMPLATES, lineTotal, totals } from './model.js';
+
+const TEMPLATE_KEYS = TEMPLATES.map(([k]) => k);
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -22,8 +24,13 @@ export function formatField(fmt, value, currency) {
   return num(value);
 }
 
-export function renderPage(o, s, { interactive = false, selected = null } = {}) {
+/** Map of item id to photo, so offer lines show the current item photo without copying it. */
+export const imageMap = (items) => Object.fromEntries(items.filter((i) => i.image).map((i) => [i.id, i.image]));
+
+export function renderPage(o, s, { interactive = false, selected = null, images = {} } = {}) {
   const d = o.design;
+  const tpl = TEMPLATE_KEYS.includes(d.template) ? d.template : 'classic';
+  const catalog = tpl === 'catalog';
   const isOffer = o.kind === 'offer';
   const cur = o.currency || s.currency;
   const c = s.company;
@@ -46,12 +53,22 @@ export function renderPage(o, s, { interactive = false, selected = null } = {}) 
       data-line="${l.id}" data-field="${field}" data-fmt="${fmt}" value="${esc(text)}">`;
   };
   const selCls = (l) => (l.id === selected ? ' is-selected' : '');
+  const photo = (l, cls) => {
+    const src = l.image || images[l.itemId];
+    if (src) return `<img class="${cls}" src="${esc(src)}" alt="" loading="lazy">`;
+    return interactive ? `<div class="${cls} no-img">No photo</div>` : '';
+  };
+  const showImg = catalog || d.showImage;
 
   // ----- header -----
   const meta = [['No.', esc(o.number)], ['Date', esc(fmtDate(o.date))]];
   if (isOffer && Number(o.validDays) > 0) meta.push(['Valid until', esc(fmtDate(addDays(o.date, o.validDays)))]);
   const logo = d.showLogo && s.logo ? `<img class="pg-logo" src="${esc(s.logo)}" alt="">` : '';
-  const head = `<header class="pg-head">
+  const brandLogo = d.brandLogo ? `<img class="pg-brandlogo" src="${esc(d.brandLogo)}" alt="">` : '';
+  const head = catalog ? `<header class="cat-head">
+    <div class="cat-band"></div>
+    <div class="cat-logos">${logo || `<div class="pg-company">${esc(c.name)}</div>`}${brandLogo}</div>
+  </header>` : `<header class="pg-head">
     <div class="pg-brand">${logo}
       <div><div class="pg-company">${esc(c.name)}</div>${c.tagline ? `<div class="pg-tagline">${esc(c.tagline)}</div>` : ''}</div>
     </div>
@@ -63,6 +80,7 @@ export function renderPage(o, s, { interactive = false, selected = null } = {}) 
 
   const intro = `<section class="pg-intro">
     ${ed('title', o.title, 'Title', 'pg-title', true)}
+    ${catalog && isOffer ? `<div class="cat-meta">${meta.map(([k, v]) => `${k} <b>${v}</b>`).join(' &middot; ')}</div>` : ''}
     ${ed('intro', o.intro, 'Add an introduction (optional)', 'pg-intro-text')}
   </section>`;
 
@@ -88,13 +106,28 @@ export function renderPage(o, s, { interactive = false, selected = null } = {}) 
 
   let lines = '';
   if (!o.lines.length) {
+    // Empty state is shared by every template.
     lines = interactive
       ? `<div class="pg-empty ed-only">Add parts from the <b>Items</b> panel to build this ${KIND_LABEL[o.kind].toLowerCase()}.</div>`
       : '';
+  } else if (catalog) {
+    const cols = 4 + (isOffer ? 2 : 0);
+    const row = (l) => `<tr data-row="${l.id}"${selCls(l) ? ' class="is-selected"' : ''}>
+        <td class="cat-img">${photo(l, 'cat-photo')}</td>
+        <td class="cat-code">${led(l, 'code', 'Part no.', '', true)}</td>
+        <td class="cat-desc">${led(l, 'description', 'Application')}</td>
+        ${isOffer ? `<td class="cat-qty">${lnum(l, 'qty', 'qty')}<span>${esc(l.unit || 'pcs')}</span></td>` : ''}
+        <td class="cat-price">${lnum(l, 'price', 'money')}</td>
+        ${isOffer ? `<td class="cat-total" data-lt="${l.id}">${esc(money(lineTotal(l), cur))}</td>` : ''}
+      </tr>`;
+    lines = `<table class="cat-table"><tbody>${groups.map((g) =>
+      (g.type ? `<tr class="cat-grp"><td colspan="${cols}">${esc(g.type)}</td></tr>` : '') + g.lines.map(row).join(''),
+    ).join('')}</tbody></table>`;
   } else if (d.layout === 'cards') {
     const card = (l) => `<div class="pg-card${selCls(l)}" data-row="${l.id}">
         <div class="pc-top">${d.showType && !d.groupByType && l.type ? `<span class="pc-type">${esc(l.type)}</span>` : '<span></span>'}
           ${d.showCode ? led(l, 'code', 'Code', 'pc-code', true) : ''}</div>
+        ${showImg ? photo(l, 'pc-photo') : ''}
         ${led(l, 'description', 'Description', 'pc-desc')}
         ${d.showBrand && l.brand ? `<div class="sub">${esc(l.brand)}</div>` : ''}
         <div class="pc-bottom">
@@ -107,8 +140,9 @@ export function renderPage(o, s, { interactive = false, selected = null } = {}) 
       (g.type ? `<h3 class="pg-group">${esc(g.type)}</h3>` : '') + `<div class="pg-card-grid">${g.lines.map(card).join('')}</div>`,
     ).join('')}</section>`;
   } else {
-    const cols = 3 + (d.showCode ? 1 : 0) + (isOffer ? 2 : 0) + (showDisc ? 1 : 0);
+    const cols = 3 + (showImg ? 1 : 0) + (d.showCode ? 1 : 0) + (isOffer ? 2 : 0) + (showDisc ? 1 : 0);
     const row = (l) => `<tr data-row="${l.id}"${selCls(l) ? ' class="is-selected"' : ''}>
+        ${showImg ? `<td class="c-img">${photo(l, 'row-photo')}</td>` : ''}
         ${d.showCode ? `<td class="c-code">${led(l, 'code', 'Code', '', true)}</td>` : ''}
         <td class="c-desc">${led(l, 'description', 'Description')}${subline(l)}</td>
         ${isOffer ? `<td class="c-qty num">${lnum(l, 'qty', 'qty')}</td>` : ''}
@@ -119,6 +153,7 @@ export function renderPage(o, s, { interactive = false, selected = null } = {}) 
       </tr>`;
     lines = `<table class="pg-table">
       <thead><tr>
+        ${showImg ? '<th class="c-img"></th>' : ''}
         ${d.showCode ? '<th class="c-code">Code</th>' : ''}
         <th class="c-desc">Description</th>
         ${isOffer ? '<th class="c-qty num">Qty</th>' : ''}
@@ -142,7 +177,7 @@ export function renderPage(o, s, { interactive = false, selected = null } = {}) 
         <div class="grand"><span>Total</span><b data-t="total">${esc(money(t.total, cur))}</b></div>
       </section>`
     : '';
-  const priceNote = !isOffer && o.lines.length
+  const priceNote = !isOffer && o.lines.length && (!catalog || d.showVat)
     ? `<p class="pg-pricenote">Prices in ${esc(String(cur).toUpperCase())}${d.showVat ? `, excluding ${esc(num(o.vatRate))}% VAT` : ''}.</p>`
     : '';
 
@@ -155,7 +190,6 @@ export function renderPage(o, s, { interactive = false, selected = null } = {}) 
 
   const accent = HEX.test(d.accent) ? d.accent : '#e4572e';
   const font = FONTS[d.font] || FONTS.Inter;
-  const tpl = ['classic', 'bold', 'minimal'].includes(d.template) ? d.template : 'classic';
 
   return `<div class="page tpl-${tpl}${interactive ? ' interactive' : ''}" style="--accent:${accent};--pfont:${esc(font)}">
     ${head}${intro}${client}
