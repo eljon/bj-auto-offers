@@ -55,6 +55,18 @@ export function mount(root) {
       </form>
 
       <section class="card">
+        <h2>Brands</h2>
+        <p class="muted">Brand logos you can put on any offer or price list (Design tab).</p>
+        <div class="brand-list">${state.brands.map((b) => `<div class="brand-row">
+            <div class="logo-prev">${b.logo ? `<img src="${esc(b.logo)}" alt="">` : '<span class="muted small">No logo</span>'}</div>
+            <b>${esc(b.name)}</b>
+            <label class="btn small">${icon('upload')}<span>Logo</span><input type="file" accept="image/*" data-brand-logo="${esc(b.id)}" hidden></label>
+            <button class="icon-btn" data-brand-del="${esc(b.id)}" title="Delete brand" aria-label="Delete brand">${icon('trash')}</button>
+          </div>`).join('') || '<p class="muted small">No brands yet.</p>'}</div>
+        <div class="brand-add"><input data-brand-name placeholder="Brand name, e.g. Autoline"><button class="btn" data-act="brand-add">${icon('plus')}<span>Add brand</span></button></div>
+      </section>
+
+      <section class="card">
         <h2>Account &amp; data</h2>
         <p class="muted">${store.isFirebase && !store.usesSignIn
           ? 'Data is stored in Cloud Firestore. Sign-in is turned off, so anyone with the link can view and edit.'
@@ -72,7 +84,7 @@ export function mount(root) {
 
   render();
 
-  root.addEventListener('input', () => { dirty = true; });
+  root.addEventListener('input', (e) => { if (e.target.closest('form')) dirty = true; });
   root.addEventListener('click', async (e) => {
     const acc = e.target.closest('[data-accent]');
     if (acc) {
@@ -89,8 +101,20 @@ export function mount(root) {
       dirty = true;
     }
     if (act === 'signout') store.signOut();
+    if (act === 'brand-add') {
+      const input = root.querySelector('[data-brand-name]');
+      const name = input.value.trim();
+      if (!name) { input.focus(); return; }
+      store.add('meta', { kind: 'brand', name, logo: '', createdAt: Date.now() });
+      toast(`Brand "${name}" added. Upload its logo next.`);
+    }
+    const del = e.target.closest('[data-brand-del]');
+    if (del) {
+      const b = state.brands.find((x) => x.id === del.dataset.brandDel);
+      if (b && (await confirmDialog(`Delete the brand "${b.name}"? Documents using its logo will no longer show it.`))) store.remove('meta', b.id);
+    }
     if (act === 'backup') {
-      const data = { app: 'bj-auto-offers', version: 1, exportedAt: new Date().toISOString(), settings: state.settings, items: state.items, offers: state.offers };
+      const data = { app: 'bj-auto-offers', version: 1, exportedAt: new Date().toISOString(), settings: state.settings, items: state.items, offers: state.offers, brands: state.brands };
       download(`bj-auto-offers-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 1), 'application/json');
     }
   });
@@ -109,6 +133,17 @@ export function mount(root) {
         toast(err.message, 'error');
       }
     }
+    if (e.target.matches('[data-brand-logo]')) {
+      const file = e.target.files[0];
+      const b = state.brands.find((x) => x.id === e.target.dataset.brandLogo);
+      if (!file || !b) return;
+      try {
+        const { id, ...rest } = b;
+        store.set('meta', id, { ...rest, kind: 'brand', logo: await imageToDataURL(file, 480) });
+        toast('Brand logo saved');
+      } catch (err) { toast(err.message, 'error'); }
+      return;
+    }
     if (e.target.matches('[data-restore]')) {
       const file = e.target.files[0];
       e.target.value = '';
@@ -124,6 +159,7 @@ export function mount(root) {
       const entries = (list) => list.map(({ id, ...rest }) => ({ id, data: rest }));
       await store.setMany('items', entries(data.items));
       await store.setMany('offers', entries(data.offers));
+      if (Array.isArray(data.brands)) await store.setMany('meta', entries(data.brands.map((b) => ({ ...b, kind: 'brand' }))));
       if (data.settings) await store.set('meta', 'settings', mergeSettings(data.settings));
       toast('Backup restored');
     }
@@ -152,6 +188,6 @@ export function mount(root) {
 
   // Re-render on remote changes only when nothing is being edited here.
   return onChange((w) => {
-    if (w === 'settings' && !dirty) { logo = state.settings.logo; render(); }
+    if ((w === 'settings' || w === 'brands') && !dirty) { logo = state.settings.logo; render(); }
   });
 }

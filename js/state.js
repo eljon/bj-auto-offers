@@ -32,6 +32,7 @@ export const state = {
   user: null,
   items: [],
   offers: [],
+  brands: [],
   settings: mergeSettings(),
   loaded: { items: false, offers: false, meta: false },
   // Offers created this session, readable by the editor before the first snapshot arrives.

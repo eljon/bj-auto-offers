@@ -450,7 +450,8 @@ table.mini th, table.mini td { padding: 5px 8px; border-bottom: 1px solid var(--
   display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: 'photo body' 'photo bottom' 'photo total';
   grid-template-rows: 1fr auto auto; column-gap: 12px;
 }
-.cols-2 .has-img .pc-photo { grid-area: photo; height: 100%; min-height: 88px; margin: 0; }
+.cols-2 .has-img .pc-media { grid-area: photo; display: flex; }
+.cols-2 .has-img .pc-photo { height: 100%; min-height: 88px; margin: 0; }
 .cols-2 .has-img .pc-body { grid-area: body; }
 .cols-2 .has-img .pc-bottom { grid-area: bottom; }
 .cols-2 .has-img .pc-total { grid-area: total; }
@@ -473,7 +474,8 @@ table.mini th, table.mini td { padding: 5px 8px; border-bottom: 1px solid var(--
 .tpl-catalog .pc-qty .num-in { color: #fff; }
 .tpl-catalog .pc-total { margin: 0; padding: 5px 10px; border-top: 1.5px solid #1d2129; }
 .tpl-catalog .cols-2 .pg-card.has-img { column-gap: 0; grid-template-columns: 132px minmax(0, 1fr); }
-.tpl-catalog .cols-2 .has-img .pc-photo { border-right: 1.5px solid #1d2129; min-height: 110px; }
+.tpl-catalog .cols-2 .has-img .pc-media { border-right: 1.5px solid #1d2129; }
+.tpl-catalog .cols-2 .has-img .pc-photo { min-height: 110px; }
 .tpl-catalog .pg-cards .pg-group { font-family: 'Graduate', Georgia, serif; font-weight: 400; font-size: 20px; color: #111; border: 0; text-align: center; margin: 18px 0 10px; }
 .tpl-catalog .pg-card.is-selected { box-shadow: 0 0 0 3px #f79009; }
 
@@ -495,7 +497,7 @@ table.mini th, table.mini td { padding: 5px 8px; border-bottom: 1px solid var(--
 .no-img { display: grid; place-items: center; background: #f3f4f6; color: #a0a6b1; font-size: 10px; text-align: center; }
 
 /* Parts Catalog template: slanted navy/steel band, centered logos, slab title, photo table, price column in accent */
-.tpl-catalog { padding-top: 0; }
+.page.tpl-catalog { padding-top: 0; }
 .cat-head { margin: 0 -52px; text-align: center; }
 .cat-band { position: relative; height: 104px; background: color-mix(in srgb, var(--accent) 22%, #bccde0); }
 .cat-band::before {
@@ -717,3 +719,238 @@ table.mini th, table.mini td { padding: 5px 8px; border-bottom: 1px solid var(--
 .col-icon.cols-2 { grid-template-columns: 1fr 1fr; }
 .col-icon.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
 .col-icon i { border: 1.5px solid currentColor; border-radius: 2px; }
+
+/* ============ shared bits for flyer templates ============ */
+.pg-subtitle { font-size: 14px; color: #475467; }
+.pg-pricing {
+  display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 4px; background: #1d2129; color: #fff;
+  font-weight: 800; font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+}
+.page.designed { position: relative; overflow: hidden; }
+.page.designed .pc-unit { display: none; }
+.page.designed .pg-foot { position: relative; z-index: 1; }
+.pc-media { display: block; }
+.cols-1 { grid-template-columns: 1fr; }
+
+/* ---------- Banner List (Autovolts flyer): slanted band, navy title bar, yellow price column ---------- */
+.page.tpl-banner { padding-top: 0; --navy: #1f3a5f; }
+.tpl-banner .cat-logos { margin-top: -38px; }
+.bn-brand { text-align: center; margin: 18px 0 6px; }
+.bn-brand .pg-brandlogo { max-height: 64px; }
+.tpl-banner .pg-intro { margin: 14px 0 18px; }
+.bn-bar { background: var(--navy); color: #fff; padding: 12px 18px; text-align: center; }
+.bn-bar .pg-title { font-family: 'Open Sans', 'Inter', sans-serif; font-size: 25px; font-weight: 700; letter-spacing: .01em; text-transform: uppercase; margin: 0; }
+.tpl-banner .pg-subtitle { text-align: center; margin-top: 6px; }
+.bn-offer { display: flex; align-items: center; gap: 10px; margin: 18px 0 0 36px; font-weight: 700; font-size: 16px; }
+.bn-offer::before { content: '----------'; letter-spacing: 1px; }
+.bn-offer .pg-intro-text { color: #1d2129; white-space: nowrap; }
+.bn-offer .pg-pricing { margin: 0; background: #fff200; color: #1d2129; font-size: 14px; }
+.tpl-banner .pg-grid { gap: 0 16px; }
+.tpl-banner .pg-card {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr) 92px; grid-template-areas: 'photo body price' 'photo body total';
+  border: 0; border-bottom: 1px solid #e3e5ea; border-radius: 0; padding: 0; gap: 0; align-items: center; min-height: 100px;
+}
+.tpl-banner .pc-media { grid-area: photo; padding: 8px; }
+.tpl-banner .pc-photo { height: 84px; border-radius: 2px; margin: 0; }
+.tpl-banner .pc-body { grid-area: body; padding: 6px 10px; font-family: 'Open Sans', 'Inter', sans-serif; }
+.tpl-banner .pc-top { order: 2; font-size: 14px; }
+.tpl-banner .pc-code { margin: 0; color: #1d2129; font-size: 15px; text-align: left; }
+.tpl-banner .pc-desc { font-size: 15px; font-weight: 500; text-transform: uppercase; }
+.tpl-banner .pc-bottom { grid-area: price; align-self: stretch; margin: 0; background: #fff200; justify-content: center; align-items: center; padding: 0 8px; }
+.tpl-banner .pc-price { color: #1d2129; font-size: 19px; font-weight: 700; justify-content: center; }
+.tpl-banner .pc-price .num-in, .tpl-banner .pc-price > span:first-child { width: 80px; text-align: center; }
+.tpl-banner .pc-qty { color: #1d2129; }
+.tpl-banner .pc-total { grid-area: total; background: #fff200; margin: 0; border: 0; padding: 0 8px 6px; }
+.tpl-banner .cols-3 .pg-card { grid-template-columns: 1fr; grid-template-areas: 'photo' 'body' 'price' 'total'; }
+.tpl-banner .cols-3 .pc-bottom { padding: 6px; }
+.tpl-banner .cols-3 .pc-photo { height: 110px; }
+
+/* ---------- Dark Showcase (coil spring flyer): dark card, yellow pills, photo on the right ---------- */
+.page.tpl-showcase { --pill: var(--accent); }
+.sc-head { text-align: center; margin: 4px 0 24px; }
+.sc-logo { display: flex; align-items: center; gap: 0; justify-content: center; }
+.sc-logo::before, .sc-logo::after { content: ''; flex: 1; height: 2px; background: #262a2e; }
+.sc-logo .pg-logo { max-height: 70px; margin: 0 -20px; position: relative; }
+.sc-heading { font-family: 'Montserrat', 'Poppins', sans-serif; font-weight: 800; font-size: 34px; color: #262a2e; line-height: 1.25; margin-top: 8px; white-space: pre-wrap; text-transform: uppercase; }
+.sc-head .pg-brandlogo { max-height: 48px; margin-top: 8px; }
+.sc-card {
+  margin: 0 46px; padding: 26px 28px 30px; border-radius: 14px; color: #fff;
+  background: linear-gradient(180deg, #3d4148 0%, #2b2e34 45%, #17181b 100%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .28);
+}
+.sc-titles { text-align: center; margin-bottom: 14px; }
+.sc-titles .pg-title { font-family: 'Montserrat', 'Poppins', sans-serif; font-size: 42px; font-weight: 800; color: #fff; margin: 0; padding-bottom: 6px; border-bottom: 2px solid rgba(255, 255, 255, .7); display: inline-block; text-transform: uppercase; }
+.sc-titles .pg-subtitle { color: var(--pill); font-family: 'Aleo', Georgia, serif; font-weight: 700; font-size: 15px; margin-top: 6px; }
+.tpl-showcase .pg-grid { gap: 22px; }
+.tpl-showcase .pg-card {
+  display: grid; grid-template-columns: minmax(0, 1fr) 46%; grid-template-areas: 'body photo' 'bottom photo' 'total photo';
+  background: none; border: 0; padding: 0; gap: 8px 12px; align-items: center; color: #fff;
+}
+.tpl-showcase .pc-media { grid-area: photo; }
+.tpl-showcase .pc-photo { height: 150px; object-fit: contain; border-radius: 6px; margin: 0; background: transparent; }
+.tpl-showcase .pc-body { grid-area: body; text-align: center; align-self: end; }
+.tpl-showcase .pc-code { margin: 0; color: #fff; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 28px; text-align: center; letter-spacing: .02em; }
+.tpl-showcase .pc-top { justify-content: center; }
+.tpl-showcase .pc-desc { font-family: 'Lato', 'Inter', sans-serif; font-weight: 900; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; }
+.tpl-showcase .pc-bottom { grid-area: bottom; justify-content: center; margin: 0; align-self: start; }
+.tpl-showcase .pc-price {
+  background: linear-gradient(90deg, #f9d84a, var(--pill)); color: #111; border-radius: 10px; padding: 6px 26px;
+  font-family: 'Noto Sans', 'Inter', sans-serif; font-size: 20px; font-weight: 800; justify-content: center; box-shadow: 0 4px 10px rgba(0, 0, 0, .3);
+}
+.tpl-showcase .pc-price .num-in, .tpl-showcase .pc-price > span:first-child { width: 110px; text-align: center; }
+.tpl-showcase .pc-qty { color: #ddd; }
+.tpl-showcase .pc-total { grid-area: total; color: #ddd; border-color: rgba(255, 255, 255, .25); }
+.tpl-showcase .pc-total b { color: #fff; }
+.tpl-showcase .cols-2 .pg-card, .tpl-showcase .cols-3 .pg-card { grid-template-columns: 1fr; grid-template-areas: 'photo' 'body' 'bottom' 'total'; }
+.tpl-showcase .cols-3 .pc-code { font-size: 20px; }
+.tpl-showcase .cols-3 .pc-photo { height: 110px; }
+.tpl-showcase .pg-pricing { background: var(--pill); color: #111; }
+.tpl-showcase .pg-totals, .tpl-showcase .pg-notes, .tpl-showcase .pg-pricenote { margin-left: 46px; margin-right: 46px; }
+
+/* ---------- Blue Wave (Autoline gasket flyer): wave header and footer, blue codes, yellow badges ---------- */
+.page.tpl-wave { padding-top: 0; padding-bottom: 110px; }
+.wv-head { position: relative; margin: 0 -52px; height: 150px; }
+.wv-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.wv-logo { position: relative; padding: 18px 0 0 52px; }
+.wv-logo .pg-logo { max-height: 70px; }
+.wv-logo .pg-company { color: #fff; }
+.wv-head .pg-brandlogo { position: absolute; right: 52px; top: 22px; max-height: 44px; }
+.tpl-wave .pg-intro { text-align: center; margin: -22px 0 26px; position: relative; }
+.tpl-wave .pg-title { font-family: 'Graduate', 'League Spartan', serif; font-size: 40px; font-weight: 400; letter-spacing: .06em; text-transform: uppercase; color: #111; margin: 0; }
+.tpl-wave .pg-subtitle { color: var(--accent); font-family: 'Graduate', serif; letter-spacing: .25em; font-size: 15px; text-transform: uppercase; }
+.wv-foot { position: absolute; left: 0; right: 0; bottom: 0; top: auto; height: 100px; }
+.tpl-wave .pg-foot { border: 0; color: #fff; }
+.tpl-wave .pg-grid { gap: 10px 18px; }
+.tpl-wave .pg-card {
+  display: grid; grid-template-columns: 150px minmax(0, 1fr) 120px; grid-template-areas: 'photo body price' 'photo body total';
+  border: 0; border-radius: 0; padding: 0; gap: 0 16px; align-items: center; background: none;
+}
+.tpl-wave .pc-media { grid-area: photo; }
+.tpl-wave .pc-photo { height: 100px; margin: 0; border-radius: 0; }
+.tpl-wave .pc-body { grid-area: body; text-align: center; }
+.tpl-wave .pc-top { justify-content: center; }
+.tpl-wave .pc-code { margin: 0; color: var(--accent); font-family: 'League Spartan', sans-serif; font-weight: 700; font-size: 24px; text-align: center; }
+.tpl-wave .pc-desc { font-family: 'Antonio', 'Oswald', sans-serif; font-weight: 400; font-size: 22px; text-transform: uppercase; color: #111; }
+.tpl-wave .pc-bottom { grid-area: price; margin: 0; justify-content: center; }
+.tpl-wave .pc-price {
+  background: #fff200; color: #373941; border-radius: 12px; padding: 4px 12px; font-family: 'League Spartan', sans-serif;
+  font-size: 28px; font-weight: 800; justify-content: center; box-shadow: 0 2px 0 rgba(0, 0, 0, .08);
+}
+.tpl-wave .pc-price .num-in, .tpl-wave .pc-price > span:first-child { width: 92px; text-align: center; }
+.tpl-wave .pc-total { grid-area: total; }
+.tpl-wave .cols-2 .pg-card { grid-template-columns: 110px minmax(0, 1fr); grid-template-areas: 'photo body' 'photo price' 'photo total'; }
+.tpl-wave .cols-2 .pc-code { font-size: 18px; }
+.tpl-wave .cols-2 .pc-desc { font-size: 17px; }
+.tpl-wave .cols-2 .pc-price { font-size: 22px; }
+.tpl-wave .cols-3 .pg-card { grid-template-columns: 1fr; grid-template-areas: 'photo' 'body' 'price' 'total'; gap: 6px; }
+.tpl-wave .cols-3 .pc-code { font-size: 17px; }
+.tpl-wave .cols-3 .pc-desc { font-size: 16px; }
+.tpl-wave .cols-3 .pc-price { font-size: 22px; }
+
+/* ---------- Orange Burst (OEM Thailand flyer): orange corner circles, photo on an orange pill, dotted price tag ---------- */
+.page.tpl-burst { padding-bottom: 80px; }
+.bu-dot { position: absolute; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffa040, var(--accent) 55%, #e05a00); }
+.bu-dot-a { left: -60px; top: -70px; }
+.bu-dot-b { right: -40px; bottom: -60px; width: 190px; height: 190px; }
+.bu-head { text-align: center; margin-bottom: 8px; }
+.bu-logo .pg-logo { max-height: 72px; }
+.bu-intro { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 26px; }
+.bu-hero img { max-width: 190px; max-height: 120px; object-fit: contain; display: block; }
+.bu-titles { text-align: center; }
+.tpl-burst .pg-title {
+  font-family: 'Anton', 'Oswald', sans-serif; font-weight: 400; font-size: 46px; line-height: 1.05; color: var(--accent);
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0, 0, 0, .35); white-space: pre-wrap; margin: 0; max-width: 300px;
+}
+.tpl-burst .pg-subtitle { color: var(--accent); font-size: 17px; margin-top: 4px; }
+.bu-intro .pg-brandlogo { max-height: 56px; }
+.tpl-burst .pg-pricing { background: var(--accent); }
+.tpl-burst .pg-grid { gap: 8px 18px; }
+.tpl-burst .pg-card {
+  display: grid; grid-template-columns: 165px minmax(0, 1fr) 120px; grid-template-areas: 'photo body price' 'photo body total';
+  border: 0; border-radius: 0; padding: 0; gap: 0 14px; align-items: center; background: none; margin-left: 20px;
+}
+.tpl-burst .pc-media { grid-area: photo; background: linear-gradient(180deg, #ffa53a, var(--accent)); border-radius: 30px; padding: 6px 14px; height: 54px; display: flex; align-items: center; }
+.tpl-burst .pc-photo { height: 42px; object-fit: contain; margin: 0; border-radius: 0; background: #fff; border-radius: 22px; padding: 2px 8px; }
+.tpl-burst .pc-body { grid-area: body; text-align: center; font-family: 'Poppins', sans-serif; }
+.tpl-burst .pc-top { justify-content: center; display: inline; }
+.tpl-burst .pc-code { display: inline; margin: 0; color: #111; font-weight: 700; font-size: 17px; text-align: center; }
+.tpl-burst .pc-desc { display: inline; font-weight: 700; font-size: 17px; text-transform: uppercase; color: #111; margin-left: 6px; }
+.tpl-burst .pc-bottom { grid-area: price; margin: 0; justify-content: center; }
+.tpl-burst .pc-price {
+  border: 2.5px dotted #111; border-radius: 14px; padding: 2px 12px; color: var(--accent);
+  font-family: 'Anton', 'Oswald', sans-serif; font-weight: 400; font-size: 21px; justify-content: center; background: #fff;
+}
+.tpl-burst .pc-price .num-in, .tpl-burst .pc-price > span:first-child { width: 86px; text-align: center; }
+.tpl-burst .pc-total { grid-area: total; }
+.tpl-burst .cols-2 .pg-card { grid-template-columns: 1fr 110px; grid-template-areas: 'photo photo' 'body price' 'total total'; margin: 0; gap: 6px 10px; }
+.tpl-burst .cols-3 .pg-card { grid-template-columns: 1fr; grid-template-areas: 'photo' 'body' 'price' 'total'; margin: 0; gap: 6px; }
+.tpl-burst .cols-2 .pc-code, .tpl-burst .cols-2 .pc-desc, .tpl-burst .cols-3 .pc-code, .tpl-burst .cols-3 .pc-desc { font-size: 14px; }
+
+/* ---------- Red Drip (glow plug flyer): red and black strokes, framed photos, plain prices ---------- */
+.page.tpl-drip { padding-bottom: 70px; }
+.dr-svg { position: absolute; width: 230px; height: 230px; pointer-events: none; }
+.dr-tr { right: -10px; top: -10px; }
+.dr-bl { left: -20px; bottom: 10px; width: 170px; height: 170px; }
+.dr-head { position: relative; text-align: center; margin: -8px 0 6px; }
+.dr-logo .pg-logo { max-height: 56px; }
+.dr-intro { display: flex; align-items: center; gap: 4px; margin: 0 0 40px 10px; position: relative; }
+.dr-hero img { max-width: 210px; max-height: 150px; object-fit: contain; display: block; }
+.dr-titles { position: relative; }
+.tpl-drip .pg-title {
+  font-family: 'Poppins', sans-serif; font-weight: 900; font-style: italic; font-size: 48px; line-height: .85; color: #191919;
+  text-transform: uppercase; white-space: pre-wrap; margin: 0; max-width: 240px;
+}
+.tpl-drip .pg-subtitle { font-family: 'Poppins', sans-serif; font-weight: 900; font-style: italic; font-size: 48px; line-height: 1; color: var(--accent); text-transform: uppercase; margin-left: -56px; }
+.dr-dots { display: inline-block; width: 48px; height: 22px; background-image: radial-gradient(#191919 1.2px, transparent 1.4px); background-size: 6px 6px; }
+.dr-titles .dr-dots { position: absolute; right: -60px; bottom: 12px; }
+.dr-dots-b { position: absolute; right: 30px; bottom: 34px; }
+.dr-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 26px; background: #191919; }
+.tpl-drip .pg-foot { border: 0; color: #fff; position: absolute; left: 0; right: 0; bottom: 6px; padding: 0; z-index: 2; }
+.tpl-drip .pg-pricing { background: none; color: #191919; padding: 0; font-size: 13px; align-self: flex-start; margin-top: 60px; }
+.dr-intro .pg-brandlogo { max-height: 50px; }
+.tpl-drip .pg-grid { gap: 10px 18px; }
+.tpl-drip .pg-card {
+  display: grid; grid-template-columns: 76px minmax(0, 1fr) 110px; grid-template-areas: 'photo body price' 'photo body total';
+  border: 0; border-radius: 0; padding: 0; gap: 0 18px; align-items: center; background: none; margin: 0 40px 0 60px;
+}
+.tpl-drip .pc-media { grid-area: photo; border: 2.5px solid #191919; border-radius: 4px; padding: 2px; height: 80px; display: flex; justify-content: center; background: #fff; }
+.tpl-drip .pc-photo { height: 100%; width: 100%; object-fit: contain; margin: 0; }
+.tpl-drip .pc-body { grid-area: body; display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; font-family: 'Poppins', sans-serif; }
+.tpl-drip .pc-top { display: contents; }
+.tpl-drip .pc-code { margin: 0; color: #191919; font-weight: 600; font-size: 21px; text-align: left; }
+.tpl-drip .pc-desc { font-weight: 600; font-size: 18px; text-transform: uppercase; color: #191919; text-align: center; }
+.tpl-drip .pc-bottom { grid-area: price; margin: 0; justify-content: center; }
+.tpl-drip .pc-price { color: #191919; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 20px; justify-content: center; }
+.tpl-drip .pc-price .num-in, .tpl-drip .pc-price > span:first-child { width: 100px; text-align: center; }
+.tpl-drip .pc-total { grid-area: total; }
+.tpl-drip .cols-2 .pg-card, .tpl-drip .cols-3 .pg-card { margin: 0; }
+.tpl-drip .cols-2 .pc-body { grid-template-columns: 1fr; }
+.tpl-drip .cols-2 .pg-card { grid-template-columns: 70px minmax(0, 1fr) 80px; }
+.tpl-drip .cols-3 .pg-card { grid-template-columns: 1fr; grid-template-areas: 'photo' 'body' 'price' 'total'; gap: 4px; }
+.tpl-drip .cols-3 .pc-body { grid-template-columns: 1fr; text-align: center; }
+.tpl-drip .cols-3 .pc-code { text-align: center; font-size: 17px; }
+.tpl-drip .cols-3 .pc-desc { font-size: 14px; }
+
+/* template picker tiles for the flyer designs */
+.tpl-banner .tt-head { border: 0; background: linear-gradient(100deg, #0b1d28 0 34%, #bccde0 34%); }
+.tpl-banner .tt-line:first-of-type { background: #1f3a5f; }
+.tpl-banner .tt-line { border-right: 14px solid #fff200; }
+
+.tpl-tile.tpl-showcase { background: linear-gradient(180deg, #3d4148, #17181b); color: #fff; }
+.tpl-showcase .tt-head { border: 0; background: #f6c21c; width: 50%; margin: 0 auto; }
+.tpl-showcase .tt-line { background: #555; }
+.tpl-wave .tt-head { border: 0; background: linear-gradient(170deg, #1658c9 0 55%, #fff 56%); height: 22px; }
+.tpl-wave .tt-line { border-right: 12px solid #fff200; }
+.tpl-burst .tt-head { border: 0; background: radial-gradient(circle at 0 0, #ff7203 0 14px, transparent 15px), #fff; }
+.tpl-burst .tt-line { border-left: 16px solid #ff7203; border-radius: 6px; }
+.tpl-drip .tt-head { border: 0; background: linear-gradient(135deg, #fff 0 60%, #b20101 60% 70%, #191919 70% 76%, #fff 76%); }
+.tpl-drip .tt-line { border-left: 8px solid #191919; }
+.tpl-grid { grid-template-columns: repeat(2, 1fr); }
+
+@media print {
+  .tpl-wave .wv-head, .tpl-banner .cat-head { margin: 0; }
+  .page.designed { overflow: visible; }
+}
+/* Price lists have no per-line total: center the price in the row. */
+.page.designed .pg-card:not(:has(.pc-total)) .pc-bottom { grid-row: 1 / 3; align-self: center; }
+.page.designed .cols-3 .pg-card:not(:has(.pc-total)) .pc-bottom { grid-row: auto; }

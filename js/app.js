@@ -53,7 +53,10 @@ function subscribeData() {
     state.loaded.offers = true;
     emit('offers');
   }));
+  // meta holds the settings document and one document per brand (kind: 'brand').
   unsubs.push(store.subscribe('meta', (list) => {
+    state.brands = list.filter((d) => d.kind === 'brand').sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    emit('brands');
     state.settings = mergeSettings(list.find((d) => d.id === 'settings') || {});
     delete state.settings.id;
     state.loaded.meta = true;

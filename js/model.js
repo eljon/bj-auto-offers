@@ -12,6 +12,9 @@ export const FONTS = {
   Poppins: "'Poppins', system-ui, sans-serif",
   'Roboto Condensed': "'Roboto Condensed', 'Arial Narrow', sans-serif",
   'Playfair Display': "'Playfair Display', Georgia, serif",
+  'League Spartan': "'League Spartan', 'Poppins', sans-serif",
+  Oswald: "'Oswald', 'Roboto Condensed', sans-serif",
+  Antonio: "'Antonio', 'Oswald', sans-serif",
 };
 
 export const TEMPLATES = [
@@ -19,10 +22,37 @@ export const TEMPLATES = [
   ['bold', 'Bold'],
   ['minimal', 'Minimal'],
   ['catalog', 'Parts Catalog'],
+  ['banner', 'Banner List'],
+  ['showcase', 'Dark Showcase'],
+  ['wave', 'Blue Wave'],
+  ['burst', 'Orange Burst'],
+  ['drip', 'Red Drip'],
 ];
 
-// Applied when the Parts Catalog template is picked: photo table, blue price column, slab title.
-export const CATALOG_PRESET = { font: 'Poppins', accent: '#1f4ea8', showImage: true };
+// Applied when a flyer template is picked (copied from the BJ Auto flyers they are modeled on).
+const FLYER = { showImage: true, showType: false, showBrand: false, groupByType: false, showClient: false };
+export const TEMPLATE_PRESETS = {
+  catalog: { ...FLYER, font: 'League Spartan', accent: '#1f4ea8', priceSymbol: '₱', priceDecimals: 2 },
+  banner: { ...FLYER, font: 'Inter', accent: '#fff200', columns: 2, priceSymbol: '₱', priceDecimals: 0 },
+  showcase: { ...FLYER, font: 'Oswald', accent: '#f6c21c', priceSymbol: '₱', priceDecimals: 0 },
+  wave: { ...FLYER, font: 'League Spartan', accent: '#4284e6', priceSymbol: '', priceDecimals: 0 },
+  burst: { ...FLYER, font: 'Poppins', accent: '#ff7203', priceSymbol: 'P', priceDecimals: 0 },
+  drip: { ...FLYER, font: 'Poppins', accent: '#b20101', priceSymbol: '', priceDecimals: 2 },
+};
+export const CATALOG_PRESET = TEMPLATE_PRESETS.catalog;
+
+export const PRICING_MODES = { none: 'Nothing', net: 'Net price', discount: 'Discount(s)' };
+/** The pricing note a document shows. Discounts are display-only and never change the prices. */
+export function pricingLabel(o) {
+  const p = o.pricing || {};
+  if (p.mode === 'net') return p.label || 'NET PRICE';
+  if (p.mode === 'discount') {
+    const ds = (p.discounts || []).filter((x) => Number(x));
+    if (!ds.length) return p.label || '';
+    return `${p.label || 'LESS'} ${ds.map((x) => `${x}%`).join(' + ')}`;
+  }
+  return '';
+}
 
 export const SWATCHES = ['#1f4ea8', '#e4572e', '#d92d20', '#f79009', '#12b76a', '#0e9384', '#1570ef', '#2e3a8c', '#7a5af8', '#c11574', '#1d2939'];
 
@@ -41,6 +71,10 @@ export const DEFAULT_DESIGN = {
   showLogo: true,
   showImage: false,
   brandLogo: '',
+  brandId: '',
+  heroImage: '',
+  priceSymbol: '₱',
+  priceDecimals: 2,
 };
 
 export const lineTotal = (l) => (Number(l.price) || 0) * (Number(l.qty) || 0) * (1 - (Number(l.discount) || 0) / 100);
@@ -56,6 +90,9 @@ export function normalizeOffer(o) {
     ...o,
     kind: o.kind === 'pricelist' ? 'pricelist' : 'offer',
     currency: CURRENCY,
+    subtitle: o.subtitle || '',
+    heading: o.heading || '',
+    pricing: { mode: 'none', discounts: [], label: '', ...(o.pricing || {}) },
     client: { name: '', company: '', details: '', ...(o.client || {}) },
     lines: (o.lines || []).map((l) => ({ qty: 1, discount: 0, unit: 'pcs', ...l, id: l.id || store.uid() })),
     design: normalizeDesign(o.design),
@@ -115,7 +152,7 @@ export function newOffer(kind) {
       showVat: isOffer,
       showClient: isOffer,
       groupByType: !isOffer,
-      ...(s.template === 'catalog' ? { ...CATALOG_PRESET, accent: s.accent } : {}),
+      ...(TEMPLATE_PRESETS[s.template] || {}),
     },
   };
 }

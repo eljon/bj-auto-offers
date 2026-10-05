@@ -60,7 +60,7 @@ export function openItemForm(item = null, { onSaved } = {}) {
       </div>`}
     </div>
     <datalist id="dl-types">${itemTypes().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
-    <datalist id="dl-brands">${[...new Set(state.items.map((i) => i.brand).filter(Boolean))].sort().map((b) => `<option value="${esc(b)}">`).join('')}</datalist>
+    <datalist id="dl-brands">${[...new Set([...state.brands.map((b) => b.name), ...state.items.map((i) => i.brand)].filter(Boolean))].sort().map((b) => `<option value="${esc(b)}">`).join('')}</datalist>
     <datalist id="dl-units"><option value="pcs"><option value="set"><option value="pair"><option value="l"><option value="kg"><option value="m"></datalist>`,
     onMount: (dlg) => {
       dlg.querySelector(isNew && !it.type ? '[name=type]' : '[name=description]').focus();

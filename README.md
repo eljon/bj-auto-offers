@@ -15,9 +15,13 @@ No build step: plain HTML, CSS and JavaScript modules.
 - **Price history**: every price change (edits, CSV imports, bulk adjustments, reverts) is kept with date and
   source, for items in the database and for lines inside each document. "Revert to original price" per item,
   per line, or for all shown items / all lines at once, and any earlier price can be restored from the history.
+- **Pricing note** per document (Details > Pricing): show nothing, "NET PRICE", or discounts such as "LESS 10% + 5%".
+  Display only: prices are not recalculated.
 - **Two document kinds**: offers (quantities, discounts, subtotal, VAT, total, customer block) and price lists
   (grouped by product type, no quantities).
-- **Design panel**: Classic, Bold, Minimal and **Parts Catalog** templates (Parts Catalog: slanted header band,
+- **Design panel**: Classic, Bold, Minimal plus flyer templates modeled on the BJ Auto offers: **Parts Catalog**,
+  **Banner List**, **Dark Showcase**, **Blue Wave**, **Orange Burst** and **Red Drip**; brand logos from a saved brand
+  library (Settings > Brands), header image, price format (₱ / P / none, with or without decimals). Templates: (Parts Catalog: slanted header band,
   company and brand logos, slab title, photo table with a colored price column, prints edge to edge), 1, 2 or 3 column layout on every template, accent colors, fonts,
   toggles for logo, codes, types, brands and grouping.
 - **PDF / Print**: only the page is printed, A4, with repeating table headers.
@@ -75,6 +79,7 @@ To move data from demo mode: Settings > Download backup while in demo mode, then
 | `items` | auto id | `type` (item name), `code` (part number), `brand`, `description` (application), `unit`, `price`, `priceHistory[]` (`price`, `at`, `source`, `note`), `image` (JPEG data URL), `createdAt`, `updatedAt` |
 | `offers` | auto id | `kind` (`offer` / `pricelist`), `title`, `number`, `date`, `validDays`, `status`, `intro`, `client {company, name, details}`, `lines[]`, `notes`, `currency`, `vatRate`, `design {...}`, `total`, `createdAt`, `updatedAt` |
 | `meta` | `settings` | company profile, `logo` (data URL), defaults, `nextNumber` |
+| `meta` | brand ids | `kind: 'brand'`, `name`, `logo` (data URL) |
 
 Offer lines copy the item's data when added, so changing a price in the database does not silently change
 documents already sent. Photos are not copied: lines show the item's current photo. Use **Details > Update prices** in the editor to pull current prices.

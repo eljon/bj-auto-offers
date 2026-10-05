@@ -6,9 +6,9 @@ import {
 } from '../ui.js';
 import {
   KIND_LABEL, STATUSES, FONTS, TEMPLATES, SWATCHES, normalizeOffer, lineFromItem, blankLine,
-  lineTotal, totals, duplicateOffer, CATALOG_PRESET,
+  lineTotal, totals, duplicateOffer, TEMPLATE_PRESETS, PRICING_MODES,
 } from '../model.js';
-import { renderPage, formatField, imageMap } from '../page.js';
+import { renderPage, formatField, imageMap, brandMap } from '../page.js';
 import { filterItems, openItemForm } from './items.js';
 import {
   withPrice, withInitialPrice, originalPrice, isPriceChanged, priceHistoryOf, priceHistoryHTML,
@@ -162,7 +162,7 @@ export function mount(root, id) {
 
   function renderAll() {
     pageStyle.textContent = offer.design.template === 'catalog' ? '@page { margin: 0 0 8mm; }' : '';
-    host.innerHTML = renderPage(offer, state.settings, { interactive: true, selected, images: imageMap(state.items) });
+    host.innerHTML = renderPage(offer, state.settings, { interactive: true, selected, images: imageMap(state.items), brands: brandMap(state.brands) });
     titleIn.value = offer.title || '';
     applyZoom();
     syncSelection();
@@ -301,6 +301,8 @@ export function mount(root, id) {
       panelBody.innerHTML = `<div class="form-stack">
         <div class="seg full">${Object.entries(KIND_LABEL).map(([k, v]) => `<button data-kind="${k}" class="${offer.kind === k ? 'active' : ''}">${v}</button>`).join('')}</div>
         <label>Title<input data-bind="title" autocomplete="off"></label>
+        <label>Subtitle<input data-bind="subtitle" autocomplete="off" placeholder="e.g. AUTOLINE or “OEM THAILAND”"></label>
+        ${offer.design.template === 'showcase' ? '<label>Heading<input data-bind="heading" autocomplete="off" placeholder="e.g. AUTOLINE PRODUCT LIST"></label>' : ''}
         <div class="row2">
           <label>Number<input data-bind="number" autocomplete="off"></label>
           <label>Date<input type="date" data-bind="date"></label>
@@ -316,6 +318,10 @@ export function mount(root, id) {
         <label>Details<textarea data-bind="client.details" rows="3" placeholder="Address, phone, email"></textarea></label>
         <h4>Pricing</h4>
         <p class="muted small">All prices are in Philippine pesos (₱).</p>
+        <label>Show on page<select data-bind="pricing.mode">${Object.entries(PRICING_MODES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+        ${offer.pricing.mode === 'discount' ? `<label>Discounts (%)<input data-discounts autocomplete="off" inputmode="decimal" placeholder="e.g. 10, 5" value="${esc((offer.pricing.discounts || []).join(', '))}"></label>` : ''}
+        ${offer.pricing.mode !== 'none' ? `<label>Label<input data-bind="pricing.label" autocomplete="off" placeholder="${offer.pricing.mode === 'net' ? 'NET PRICE' : 'LESS'}"></label>
+        <p class="muted small">Shown on the page only. Item prices stay as they are; the discount is not computed.</p>` : ''}
         <label>VAT %<input data-bind="vatRate" data-num inputmode="decimal"></label>
         <label class="check"><input type="checkbox" data-bind="design.showVat"> ${isOffer ? 'Show subtotal and VAT' : 'Note that prices exclude VAT'}</label>
         ${isOffer ? '<label class="check"><input type="checkbox" data-bind="design.showDiscount"> Discount column</label>' : ''}
@@ -344,13 +350,26 @@ export function mount(root, id) {
         ${[1, 2, 3].map((n) => `<button data-columns="${n}" class="${d.columns === n ? 'active' : ''}" title="${n} column${n > 1 ? 's' : ''}">
           <span class="col-icon cols-${n}">${'<i></i>'.repeat(n)}</span>${n} col${n > 1 ? 's' : ''}</button>`).join('')}
       </div>
-      ${d.template === 'catalog' ? `<h4>Brand logo</h4>
+      <h4>Brand logo</h4>
+      <select data-bind="design.brandId"><option value="">None</option>
+        ${state.brands.map((b) => `<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('')}</select>
       <div class="brandlogo-row">
-        <div class="logo-prev">${d.brandLogo ? `<img src="${esc(d.brandLogo)}" alt="Brand logo">` : '<span class="muted small">None</span>'}</div>
-        <label class="btn small">${icon('upload')}<span>Upload</span><input type="file" accept="image/*" data-brandlogo hidden></label>
+        <div class="logo-prev">${d.brandLogo || brandMap(state.brands)[d.brandId] ? `<img src="${esc(d.brandLogo || brandMap(state.brands)[d.brandId])}" alt="Brand logo">` : '<span class="muted small">None</span>'}</div>
+        <label class="btn small">${icon('upload')}<span>Upload other</span><input type="file" accept="image/*" data-brandlogo hidden></label>
         ${d.brandLogo ? `<button class="btn small ghost" data-act="rm-brandlogo">Remove</button>` : ''}
       </div>
-      <p class="muted small">Shown under your company logo, e.g. the product brand.</p>` : ''}
+      <p class="muted small">Pick a saved brand (manage brands in <a href="#/settings">Settings</a>) or upload a logo for this document only.</p>
+      ${['burst', 'drip'].includes(d.template) ? `<h4>Header image</h4>
+      <div class="brandlogo-row">
+        <div class="logo-prev">${d.heroImage ? `<img src="${esc(d.heroImage)}" alt="Header image">` : '<span class="muted small">None</span>'}</div>
+        <label class="btn small">${icon('upload')}<span>Upload</span><input type="file" accept="image/*" data-hero hidden></label>
+        ${d.heroImage ? '<button class="btn small ghost" data-act="rm-hero">Remove</button>' : ''}
+      </div>` : ''}
+      <h4>Price format</h4>
+      <div class="row2">
+        <label>Symbol<select data-bind="design.priceSymbol"><option value="₱">₱ 765</option><option value="P">P765</option><option value="">765 (none)</option></select></label>
+        <label>Decimals<select data-bind="design.priceDecimals" data-num><option value="2">765.00</option><option value="0">765</option></select></label>
+      </div>
       <h4>Accent color</h4>
       <div class="swatches">${SWATCHES.map((c) => `<button class="swatch ${d.accent.toLowerCase() === c ? 'active' : ''}" style="--c:${c}" data-accent="${c}" aria-label="${c}"></button>`).join('')}
         <label class="swatch custom" title="Custom color"><input type="color" data-bind="design.accent" aria-label="Custom color"></label></div>
@@ -358,7 +377,7 @@ export function mount(root, id) {
       <select data-bind="design.font">${Object.keys(FONTS).map((f) => `<option style="font-family:${esc(FONTS[f])}">${esc(f)}</option>`).join('')}</select>
       <h4>Show on page</h4>
       <label class="check"><input type="checkbox" data-bind="design.showLogo"> Company logo</label>
-      ${d.template === 'catalog' ? '' : '<label class="check"><input type="checkbox" data-bind="design.showImage"> Product photos</label>'}
+      ${['classic', 'bold', 'minimal'].includes(d.template) ? '<label class="check"><input type="checkbox" data-bind="design.showImage"> Product photos</label>' : ''}
       <label class="check"><input type="checkbox" data-bind="design.showCode"> Part code</label>
       <label class="check"><input type="checkbox" data-bind="design.showType"> Product type</label>
       <label class="check"><input type="checkbox" data-bind="design.showBrand"> Brand</label>
@@ -452,7 +471,7 @@ export function mount(root, id) {
     if (tpl) {
       const was = offer.design.template;
       offer.design.template = tpl.dataset.tpl;
-      if (tpl.dataset.tpl === 'catalog' && was !== 'catalog') Object.assign(offer.design, CATALOG_PRESET);
+      if (was !== tpl.dataset.tpl && TEMPLATE_PRESETS[tpl.dataset.tpl]) Object.assign(offer.design, TEMPLATE_PRESETS[tpl.dataset.tpl]);
       renderAll(); renderPanel(); changed();
       return;
     }
@@ -477,6 +496,7 @@ export function mount(root, id) {
   async function handleAction(act) {
     if (act === 'close-sheet') { editorEl.classList.remove('sheet-open'); return; }
     if (act === 'rm-brandlogo') { offer.design.brandLogo = ''; renderAll(); renderPanel(); changed(); return; }
+    if (act === 'rm-hero') { offer.design.heroImage = ''; renderAll(); renderPanel(); changed(); return; }
     if (act === 'undo') return undo();
     if (act === 'redo') return redo();
     if (act === 'print') {
@@ -573,22 +593,31 @@ export function mount(root, id) {
     const t = e.target;
     if (t.matches('[data-pq]')) { pq = t.value; renderPickList(); return; }
     if (t.matches('[data-ptype]')) { ptype = t.value; renderPickList(); return; }
+    if (t.matches('[data-discounts]')) {
+      offer.pricing.discounts = t.value.split(/[,+\s]+/).map(parseNum).filter((x) => x > 0);
+      renderAll(); changed();
+      return;
+    }
     const bind = t.dataset.bind;
     if (!bind) return;
     let v = t.type === 'checkbox' ? t.checked : t.value;
     if (t.hasAttribute('data-num')) v = parseNum(v);
     if (t.hasAttribute('data-upper')) v = String(v).toUpperCase();
     setPath(offer, bind, v);
+    if (bind === 'design.brandId') offer.design.brandLogo = '';
     renderAll();
+    if (bind === 'pricing.mode' || bind === 'design.brandId') renderPanel();
     changed();
   };
   panelBody.addEventListener('input', onPanelInput);
   panelBody.addEventListener('change', async (e) => {
-    if (!e.target.matches('[data-brandlogo]')) return;
+    const hero = e.target.matches('[data-hero]');
+    if (!hero && !e.target.matches('[data-brandlogo]')) return;
     const file = e.target.files[0];
     if (!file) return;
     try {
-      offer.design.brandLogo = await imageToDataURL(file, 480);
+      const img = await imageToDataURL(file, hero ? 640 : 480, hero ? 'auto' : 'image/png');
+      if (hero) offer.design.heroImage = img; else offer.design.brandLogo = img;
       renderAll(); renderPanel(); changed();
     } catch (err) { toast(err.message, 'error'); }
   });
@@ -631,7 +660,7 @@ export function mount(root, id) {
           changed();
         }
       }
-      t.value = formatField(t.dataset.fmt, l[t.dataset.field]);
+      t.value = formatField(t.dataset.fmt, l[t.dataset.field], offer.design);
       return;
     }
     if (t.isContentEditable) {
@@ -736,7 +765,8 @@ export function mount(root, id) {
       if (panel === 'items') renderPickList();
       renderAll();
     }
-    if (w === 'settings') renderAll();
+    if (w === 'settings' || w === 'brands') renderAll();
+    if (w === 'brands' && panel === 'design') renderPanel();
   });
 
   return () => {
