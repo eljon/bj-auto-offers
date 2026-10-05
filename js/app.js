@@ -65,6 +65,10 @@ function renderUser() {
   const box = document.getElementById('user-box');
   const u = state.user;
   if (!u) { box.innerHTML = ''; return; }
+  if (u.open) {
+    box.innerHTML = '';
+    return;
+  }
   if (u.local) {
     box.innerHTML = `<a class="pill warn" href="#/settings" title="Data is stored in this browser only">Local mode</a>`;
     return;

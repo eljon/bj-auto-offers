@@ -18,7 +18,7 @@ No build step: plain HTML, CSS and JavaScript modules.
   toggles for logo, codes, types, brands and grouping.
 - **PDF / Print**: only the page is printed, A4, with repeating table headers.
 - **Settings**: company profile and logo, default currency, VAT, numbering, template and terms, JSON backup and restore.
-- Live sync between devices, offline cache (Firestore persistence), Google sign-in restricted to an allow list.
+- Live sync between devices, offline cache (Firestore persistence), optional Google sign-in restricted to an allow list.
 
 ## Try it locally
 
@@ -34,12 +34,26 @@ and no sign-in is needed. Use "Load sample parts" on the Items page to try it ou
 
 1. Create a project at <https://console.firebase.google.com>.
 2. **Build > Firestore Database > Create database** (production mode, pick a region).
-3. **Build > Authentication > Get started > Sign-in method**: enable **Google**.
-4. **Authentication > Settings > Authorized domains**: add `<your-github-user>.github.io`.
-5. **Project settings > General > Your apps**: add a **Web app**, copy its config into `js/config.js`.
+3. **Project settings > General > Your apps**: add a **Web app**, copy its config into `js/config.js`.
    (The web config is not a secret; access is enforced by the security rules.)
-6. Edit `firestore.rules`, replace `you@example.com` with the Google accounts that may use the app,
-   and paste it into **Firestore Database > Rules** (or `firebase deploy --only firestore:rules`).
+4. Paste `firestore.rules` into **Firestore Database > Rules** and publish
+   (or `firebase deploy --only firestore:rules`).
+
+`firestore.rules` currently allows open access, matching `requireSignIn = false` in `js/config.js`:
+anyone with the link can view and edit. To require Google sign-in:
+
+1. **Authentication > Sign-in method**: enable **Google**; **Authentication > Settings > Authorized domains**:
+   add `<your-github-user>.github.io`.
+2. Set `requireSignIn = true` in `js/config.js`.
+3. Replace each `if true` in the rules with `if isTeam()` and add, inside `match /databases/{database}/documents`:
+
+   ```
+   function isTeam() {
+     return request.auth != null
+       && request.auth.token.email_verified == true
+       && request.auth.token.email in ['you@example.com'];
+   }
+   ```
 
 To move data from demo mode: Settings > Download backup while in demo mode, then Settings > Restore backup after connecting.
 

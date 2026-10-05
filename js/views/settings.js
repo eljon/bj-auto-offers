@@ -57,13 +57,15 @@ export function mount(root) {
 
       <section class="card">
         <h2>Account &amp; data</h2>
-        <p class="muted">${store.isFirebase
+        <p class="muted">${store.isFirebase && !store.usesSignIn
+          ? 'Data is stored in Cloud Firestore. Sign-in is turned off, so anyone with the link can view and edit.'
+          : store.isFirebase
           ? `Signed in as <b>${esc(u?.email || u?.displayName || '')}</b>. Data is stored in Cloud Firestore.`
           : 'Data is stored in this browser (localStorage).'}</p>
         <div class="actions wrap">
           <button class="btn" data-act="backup">${icon('download')}<span>Download backup (JSON)</span></button>
           <label class="btn">${icon('upload')}<span>Restore backup</span><input type="file" accept=".json,application/json" data-restore hidden></label>
-          ${store.isFirebase ? `<button class="btn ghost" data-act="signout">${icon('logout')}<span>Sign out</span></button>` : ''}
+          ${store.usesSignIn ? `<button class="btn ghost" data-act="signout">${icon('logout')}<span>Sign out</span></button>` : ''}
         </div>
       </section>
     </div>`;

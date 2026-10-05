@@ -12,3 +12,7 @@ export const firebaseConfig = {
   appId: '1:997926508022:web:5bebe47fad856428db23d7',
   measurementId: 'G-L8H8780HRS',
 };
+
+// false: anyone who opens the app can read and edit the data (no sign-in screen).
+// true: Google sign-in is required; pair it with the allow list in firestore.rules.
+export const requireSignIn = false;

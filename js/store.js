@@ -1,10 +1,11 @@
 // Data layer. Uses Cloud Firestore when js/config.js is filled in, otherwise localStorage.
 // Every collection holds plain JSON documents; timestamps are epoch milliseconds.
-import { firebaseConfig } from './config.js';
+import { firebaseConfig, requireSignIn } from './config.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2';
 
 export const isFirebase = Boolean(firebaseConfig?.apiKey) && !firebaseConfig.apiKey.startsWith('YOUR_');
+export const usesSignIn = isFirebase && requireSignIn !== false;
 
 let fb = null;
 let impl = null;
@@ -148,6 +149,10 @@ export function onUser(cb) {
     cb({ displayName: 'Local mode', email: '', local: true });
     return () => {};
   }
+  if (!usesSignIn) {
+    cb({ displayName: 'Open access', email: '', open: true });
+    return () => {};
+  }
   return fb.a.onAuthStateChanged(fb.auth, cb);
 }
 
@@ -164,7 +169,7 @@ export async function signIn() {
 }
 
 export async function signOut() {
-  if (isFirebase) await fb.a.signOut(fb.auth);
+  if (usesSignIn) await fb.a.signOut(fb.auth);
 }
 
 const guard = (p) => {
