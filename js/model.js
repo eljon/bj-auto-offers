@@ -22,7 +22,7 @@ export const TEMPLATES = [
 ];
 
 // Applied when the Parts Catalog template is picked: photo table, blue price column, slab title.
-export const CATALOG_PRESET = { font: 'Poppins', accent: '#1f4ea8', layout: 'table', showImage: true };
+export const CATALOG_PRESET = { font: 'Poppins', accent: '#1f4ea8', showImage: true };
 
 export const SWATCHES = ['#1f4ea8', '#e4572e', '#d92d20', '#f79009', '#12b76a', '#0e9384', '#1570ef', '#2e3a8c', '#7a5af8', '#c11574', '#1d2939'];
 
@@ -30,7 +30,7 @@ export const DEFAULT_DESIGN = {
   template: 'classic',
   accent: '#e4572e',
   font: 'Inter',
-  layout: 'table',
+  columns: 1,
   showCode: true,
   showType: true,
   showBrand: true,
@@ -58,8 +58,17 @@ export function normalizeOffer(o) {
     currency: CURRENCY,
     client: { name: '', company: '', details: '', ...(o.client || {}) },
     lines: (o.lines || []).map((l) => ({ qty: 1, discount: 0, unit: 'pcs', ...l, id: l.id || store.uid() })),
-    design: { ...DEFAULT_DESIGN, ...(o.design || {}) },
+    design: normalizeDesign(o.design),
   };
+}
+
+// Documents saved before the column picker stored layout 'table' or 'cards'.
+function normalizeDesign(design = {}) {
+  const d = { ...DEFAULT_DESIGN, ...design };
+  if (![1, 2, 3].includes(Number(design.columns))) d.columns = design.layout === 'cards' ? 3 : 1;
+  d.columns = Number(d.columns);
+  delete d.layout;
+  return d;
 }
 
 export function lineFromItem(item) {

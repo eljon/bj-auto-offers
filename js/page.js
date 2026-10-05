@@ -103,12 +103,37 @@ export function renderPage(o, s, { interactive = false, selected = null, images 
     return parts.length ? `<div class="sub">${esc(parts.join(' · '))}</div>` : '';
   };
 
+  // 1 column = rows; 2 and 3 columns = tiles. Older documents stored layout 'table' / 'cards'.
+  const columns = [1, 2, 3].includes(Number(d.columns)) ? Number(d.columns) : (d.layout === 'cards' ? 3 : 1);
+
   let lines = '';
   if (!o.lines.length) {
     // Empty state is shared by every template.
     lines = interactive
       ? `<div class="pg-empty ed-only">Add parts from the <b>Items</b> panel to build this ${KIND_LABEL[o.kind].toLowerCase()}.</div>`
       : '';
+  } else if (columns > 1) {
+    const card = (l) => {
+      const img = showImg ? photo(l, 'pc-photo') : '';
+      const type = d.showType && !d.groupByType && l.type ? `<span class="pc-type">${esc(l.type)}</span>` : '';
+      const code = d.showCode ? led(l, 'code', catalog ? 'Part no.' : 'Code', 'pc-code', true) : '';
+      return `<div class="pg-card${img ? ' has-img' : ''}${selCls(l)}" data-row="${l.id}">
+        ${img}
+        <div class="pc-body">
+          ${type || code ? `<div class="pc-top">${type}${code}</div>` : ''}
+          ${led(l, 'description', catalog ? 'Application' : 'Description', 'pc-desc')}
+          ${d.showBrand && l.brand ? `<div class="sub">${esc(l.brand)}</div>` : ''}
+        </div>
+        <div class="pc-bottom">
+          ${isOffer ? `<div class="pc-qty">${lnum(l, 'qty', 'qty')}<span>&times;</span></div>` : ''}
+          <div class="pc-price">${lnum(l, 'price', 'money')}<span class="pc-unit">/ ${esc(l.unit || 'pcs')}</span></div>
+        </div>
+        ${isOffer ? `<div class="pc-total"><span>${showDisc && Number(l.discount) ? `-${num(l.discount)}%` : 'Total'}</span><b data-lt="${l.id}">${esc(money(lineTotal(l)))}</b></div>` : ''}
+      </div>`;
+    };
+    lines = `<section class="pg-cards">${groups.map((g) =>
+      (g.type ? `<h3 class="pg-group">${esc(g.type)}</h3>` : '') + `<div class="pg-grid cols-${columns}">${g.lines.map(card).join('')}</div>`,
+    ).join('')}</section>`;
   } else if (catalog) {
     const cols = 4 + (isOffer ? 2 : 0);
     const row = (l) => `<tr data-row="${l.id}"${selCls(l) ? ' class="is-selected"' : ''}>
@@ -122,22 +147,6 @@ export function renderPage(o, s, { interactive = false, selected = null, images 
     lines = `<table class="cat-table"><tbody>${groups.map((g) =>
       (g.type ? `<tr class="cat-grp"><td colspan="${cols}">${esc(g.type)}</td></tr>` : '') + g.lines.map(row).join(''),
     ).join('')}</tbody></table>`;
-  } else if (d.layout === 'cards') {
-    const card = (l) => `<div class="pg-card${selCls(l)}" data-row="${l.id}">
-        <div class="pc-top">${d.showType && !d.groupByType && l.type ? `<span class="pc-type">${esc(l.type)}</span>` : '<span></span>'}
-          ${d.showCode ? led(l, 'code', 'Code', 'pc-code', true) : ''}</div>
-        ${showImg ? photo(l, 'pc-photo') : ''}
-        ${led(l, 'description', 'Description', 'pc-desc')}
-        ${d.showBrand && l.brand ? `<div class="sub">${esc(l.brand)}</div>` : ''}
-        <div class="pc-bottom">
-          ${isOffer ? `<div class="pc-qty">${lnum(l, 'qty', 'qty')}<span>&times;</span></div>` : ''}
-          <div class="pc-price">${lnum(l, 'price', 'money')}<span class="pc-unit">/ ${esc(l.unit || 'pcs')}</span></div>
-        </div>
-        ${isOffer ? `<div class="pc-total"><span>${showDisc && Number(l.discount) ? `-${num(l.discount)}%` : 'Total'}</span><b data-lt="${l.id}">${esc(money(lineTotal(l)))}</b></div>` : ''}
-      </div>`;
-    lines = `<section class="pg-cards">${groups.map((g) =>
-      (g.type ? `<h3 class="pg-group">${esc(g.type)}</h3>` : '') + `<div class="pg-card-grid">${g.lines.map(card).join('')}</div>`,
-    ).join('')}</section>`;
   } else {
     const cols = 3 + (showImg ? 1 : 0) + (d.showCode ? 1 : 0) + (isOffer ? 2 : 0) + (showDisc ? 1 : 0);
     const row = (l) => `<tr data-row="${l.id}"${selCls(l) ? ' class="is-selected"' : ''}>

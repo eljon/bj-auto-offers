@@ -18,7 +18,7 @@ No build step: plain HTML, CSS and JavaScript modules.
 - **Two document kinds**: offers (quantities, discounts, subtotal, VAT, total, customer block) and price lists
   (grouped by product type, no quantities).
 - **Design panel**: Classic, Bold, Minimal and **Parts Catalog** templates (Parts Catalog: slanted header band,
-  company and brand logos, slab title, photo table with a colored price column, prints edge to edge), table or card layout, accent colors, fonts,
+  company and brand logos, slab title, photo table with a colored price column, prints edge to edge), 1, 2 or 3 column layout on every template, accent colors, fonts,
   toggles for logo, codes, types, brands and grouping.
 - **PDF / Print**: only the page is printed, A4, with repeating table headers.
 - **Settings**: company profile and logo, default VAT, numbering, template and terms, JSON backup and restore.

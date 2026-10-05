@@ -423,23 +423,59 @@ table.mini th, table.mini td { padding: 5px 8px; border-bottom: 1px solid var(--
 
 .pg-cards .pg-group { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 14px 0 8px; padding-bottom: 4px; border-bottom: 1.5px solid var(--accent); }
 .pg-cards .pg-group:first-child { margin-top: 0; }
-.pg-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 6px; }
+
+/* 2 and 3 column tiles */
+.pg-grid { display: grid; gap: 10px; margin-bottom: 6px; }
+.pg-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pg-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .pg-card {
   border: 1px solid #e6e8ec; border-top: 3px solid var(--accent); border-radius: 8px; padding: 10px 12px;
-  display: flex; flex-direction: column; gap: 3px; break-inside: avoid; background: #fff;
+  display: flex; flex-direction: column; gap: 3px; break-inside: avoid; background: #fff; min-width: 0;
 }
+.pc-body { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .pc-top { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; }
 .pc-type { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
-.pc-code { color: #667085; text-align: right; }
-.pc-desc { font-weight: 600; font-size: 13px; line-height: 1.35; flex: 1; }
+.pc-code { color: #667085; margin-left: auto; text-align: right; }
+.pc-desc { font-weight: 600; font-size: 13px; line-height: 1.35; }
 .pc-bottom { display: flex; align-items: baseline; justify-content: flex-end; gap: 6px; margin-top: 6px; }
 .pc-qty { display: flex; align-items: baseline; gap: 2px; font-size: 12px; color: #667085; }
 .pc-qty .num-in { width: 34px; }
-.pc-price { display: flex; align-items: baseline; gap: 4px; font-size: 18px; font-weight: 800; color: var(--accent); }
+.pc-price { display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; font-size: 18px; font-weight: 800; color: var(--accent); min-width: 0; }
 .pc-price .num-in, .pc-price > span:first-child { width: 112px; }
 .pc-unit { font-size: 11px; color: #8a92a0; font-weight: 500; white-space: nowrap; }
 .pc-total { display: flex; justify-content: space-between; font-size: 11.5px; color: #667085; border-top: 1px dashed #e6e8ec; padding-top: 5px; margin-top: 4px; }
 .pc-total b { color: #1d2129; }
+/* 2 columns: horizontal tile, photo on the left */
+.cols-2 .pg-card.has-img {
+  display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: 'photo body' 'photo bottom' 'photo total';
+  grid-template-rows: 1fr auto auto; column-gap: 12px;
+}
+.cols-2 .has-img .pc-photo { grid-area: photo; height: 100%; min-height: 88px; margin: 0; }
+.cols-2 .has-img .pc-body { grid-area: body; }
+.cols-2 .has-img .pc-bottom { grid-area: bottom; }
+.cols-2 .has-img .pc-total { grid-area: total; }
+.cols-3 .pc-price { font-size: 16px; }
+.cols-3 .pc-price .num-in, .cols-3 .pc-price > span:first-child { width: 100px; }
+
+/* Parts Catalog tiles: black borders, application in caps, price bar in the accent color */
+.tpl-catalog .pg-grid { gap: 8px; }
+.tpl-catalog .pg-card { border: 1.5px solid #1d2129; border-radius: 0; padding: 0; gap: 0; text-align: center; }
+.tpl-catalog .pc-photo { border-radius: 0; margin: 0; height: 104px; }
+.tpl-catalog .pc-body { padding: 8px 10px; justify-content: center; }
+.tpl-catalog .pc-top { justify-content: center; }
+.tpl-catalog .pc-code { margin: 0; color: #1d2129; font-weight: 700; font-size: 13px; text-align: center; }
+.tpl-catalog .pc-desc { font-weight: 800; text-transform: uppercase; font-size: 13.5px; }
+.tpl-catalog .pc-bottom { margin: 0; padding: 7px 10px; background: var(--accent); justify-content: center; align-items: center; }
+.tpl-catalog .pc-price { color: #fff; font-size: 20px; justify-content: center; }
+.tpl-catalog .pc-price .num-in { color: #fff; text-align: center; }
+.tpl-catalog .pc-unit { color: rgba(255, 255, 255, .75); }
+.tpl-catalog .pc-qty { color: rgba(255, 255, 255, .85); }
+.tpl-catalog .pc-qty .num-in { color: #fff; }
+.tpl-catalog .pc-total { margin: 0; padding: 5px 10px; border-top: 1.5px solid #1d2129; }
+.tpl-catalog .cols-2 .pg-card.has-img { column-gap: 0; grid-template-columns: 132px minmax(0, 1fr); }
+.tpl-catalog .cols-2 .has-img .pc-photo { border-right: 1.5px solid #1d2129; min-height: 110px; }
+.tpl-catalog .pg-cards .pg-group { font-family: 'Graduate', Georgia, serif; font-weight: 400; font-size: 20px; color: #111; border: 0; text-align: center; margin: 18px 0 10px; }
+.tpl-catalog .pg-card.is-selected { box-shadow: 0 0 0 3px #f79009; }
 
 .pg-totals { margin: 10px 0 0 auto; width: 290px; }
 .pg-totals > div { display: flex; justify-content: space-between; padding: 5px 6px; font-variant-numeric: tabular-nums; }
@@ -455,7 +491,7 @@ table.mini th, table.mini td { padding: 5px 8px; border-bottom: 1px solid var(--
 /* product photos in the other templates */
 .pg-table .c-img { width: 64px; padding-right: 10px; }
 .row-photo { width: 58px; height: 44px; object-fit: cover; border-radius: 4px; display: block; }
-.pc-photo { width: 100%; height: 96px; object-fit: cover; border-radius: 5px; margin: 4px 0; display: block; }
+.pc-photo { width: 100%; height: 110px; object-fit: cover; border-radius: 5px; margin: 0 0 4px; display: block; }
 .no-img { display: grid; place-items: center; background: #f3f4f6; color: #a0a6b1; font-size: 10px; text-align: center; }
 
 /* Parts Catalog template: slanted navy/steel band, centered logos, slab title, photo table, price column in accent */
@@ -674,3 +710,10 @@ table.mini th, table.mini td { padding: 5px 8px; border-bottom: 1px solid var(--
 }
 .logo-prev img, .photo-drop img { background: transparent; }
 .photo-drop img { object-fit: contain; }
+
+/* Column picker icons */
+.col-icon { display: inline-grid; gap: 2px; width: 22px; height: 14px; }
+.col-icon.cols-1 { grid-template-columns: 1fr; }
+.col-icon.cols-2 { grid-template-columns: 1fr 1fr; }
+.col-icon.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.col-icon i { border: 1.5px solid currentColor; border-radius: 2px; }

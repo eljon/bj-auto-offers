@@ -341,8 +341,8 @@ export function mount(root, id) {
         <span class="tt-head"></span><span class="tt-line"></span><span class="tt-line"></span><span class="tt-line short"></span><em>${n}</em></button>`).join('')}</div>
       <h4>Layout</h4>
       <div class="seg full">
-        <button data-layout="table" class="${d.layout === 'table' ? 'active' : ''}">${icon('list')} Table</button>
-        <button data-layout="cards" class="${d.layout === 'cards' ? 'active' : ''}">${icon('grid')} Cards</button>
+        ${[1, 2, 3].map((n) => `<button data-columns="${n}" class="${d.columns === n ? 'active' : ''}" title="${n} column${n > 1 ? 's' : ''}">
+          <span class="col-icon cols-${n}">${'<i></i>'.repeat(n)}</span>${n} col${n > 1 ? 's' : ''}</button>`).join('')}
       </div>
       ${d.template === 'catalog' ? `<h4>Brand logo</h4>
       <div class="brandlogo-row">
@@ -456,8 +456,8 @@ export function mount(root, id) {
       renderAll(); renderPanel(); changed();
       return;
     }
-    const layout = t.closest('[data-layout]');
-    if (layout) { offer.design.layout = layout.dataset.layout; renderAll(); renderPanel(); changed(); return; }
+    const cols = t.closest('[data-columns]');
+    if (cols) { offer.design.columns = Number(cols.dataset.columns); renderAll(); renderPanel(); changed(); return; }
     const accent = t.closest('[data-accent]');
     if (accent) { offer.design.accent = accent.dataset.accent; renderAll(); renderPanel(); changed(); return; }
 
