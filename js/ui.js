@@ -207,7 +207,16 @@ export const readFile = (file) => new Promise((resolve, reject) => {
   r.readAsText(file);
 });
 
-/** Downscales an image file to a data URL small enough to live inside a Firestore document. */
+const hasTransparency = (ctx, w, h) => {
+  const px = ctx.getImageData(0, 0, w, h).data;
+  for (let i = 3; i < px.length; i += 4) if (px[i] < 255) return true;
+  return false;
+};
+
+/**
+ * Downscales an image file to a data URL small enough to live inside a Firestore document.
+ * type 'auto' keeps PNG (with transparency) when the image has transparent pixels, else uses JPEG.
+ */
 export function imageToDataURL(file, maxSize = 480, type = 'image/png') {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -217,10 +226,17 @@ export function imageToDataURL(file, maxSize = 480, type = 'image/png') {
       c.width = Math.round(img.width * scale);
       c.height = Math.round(img.height * scale);
       const ctx = c.getContext('2d');
-      if (type === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
       ctx.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(img.src);
-      resolve(c.toDataURL(type, 0.82));
+      let out = type;
+      if (type === 'auto') out = hasTransparency(ctx, c.width, c.height) ? 'image/png' : 'image/jpeg';
+      if (out === 'image/jpeg') {
+        // JPEG has no alpha: flatten onto white instead of the default black.
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, c.width, c.height);
+      }
+      resolve(c.toDataURL(out, 0.82));
     };
     img.onerror = () => reject(new Error('Could not read that image.'));
     img.src = URL.createObjectURL(file);

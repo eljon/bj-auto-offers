@@ -72,7 +72,7 @@ export function openItemForm(item = null, { onSaved } = {}) {
       };
       dlg.addEventListener('change', async (e) => {
         if (!e.target.matches('[data-photo]') || !e.target.files[0]) return;
-        try { image = await imageToDataURL(e.target.files[0], 400, 'image/jpeg'); refresh(); } catch (err) { toast(err.message, 'error'); }
+        try { image = await imageToDataURL(e.target.files[0], 400, 'auto'); refresh(); } catch (err) { toast(err.message, 'error'); }
       });
       rm.addEventListener('click', () => { image = ''; refresh(); });
       dlg._resetPhoto = () => { image = ''; refresh(); };
