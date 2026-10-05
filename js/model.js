@@ -2,6 +2,7 @@
 import * as store from './store.js';
 import { state } from './state.js';
 import { todayISO, round2, CURRENCY } from './ui.js';
+import { withInitialPrice } from './prices.js';
 
 export const KIND_LABEL = { offer: 'Offer', pricelist: 'Price list' };
 export const STATUSES = ['draft', 'sent', 'accepted', 'rejected'];
@@ -62,7 +63,7 @@ export function normalizeOffer(o) {
 }
 
 export function lineFromItem(item) {
-  return {
+  const line = {
     id: store.uid(),
     itemId: item.id || null,
     type: item.type || '',
@@ -74,6 +75,8 @@ export function lineFromItem(item) {
     qty: 1,
     discount: 0,
   };
+  // Lines from the database start their own price history at the price they were added with.
+  return item.id ? withInitialPrice(line) : line;
 }
 
 export const blankLine = () => lineFromItem({});

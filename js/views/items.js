@@ -2,9 +2,12 @@
 import * as store from '../store.js';
 import { state, onChange, itemTypes } from '../state.js';
 import {
-  esc, icon, money, modal, confirmDialog, toast, parseNum, round2, parseCSV, toCSV, download, readFile, imageToDataURL,
+  esc, icon, money, num, modal, confirmDialog, toast, parseNum, round2, parseCSV, toCSV, download, readFile, imageToDataURL,
 } from '../ui.js';
 import { SAMPLE_ITEMS } from '../sample.js';
+import {
+  withPrice, withInitialPrice, originalPrice, isPriceChanged, priceHistoryOf, priceHistoryHTML,
+} from '../prices.js';
 
 const MAX_ROWS = 400;
 
@@ -30,6 +33,8 @@ export function filterItems(items, q, type) {
 export function openItemForm(item = null, { onSaved } = {}) {
   const isNew = !item?.id;
   const it = { type: '', code: '', brand: '', description: '', unit: 'pcs', price: '', image: '', ...(item || {}) };
+  // Latest saved version of the item; reverting from the history section saves right away.
+  let current = isNew ? null : { ...item };
   let image = it.image || '';
   const preview = () => (image ? `<img src="${esc(image)}" alt="">` : `${icon('upload')}<span>Add photo</span>`);
   modal({
@@ -48,6 +53,11 @@ export function openItemForm(item = null, { onSaved } = {}) {
       <label>Unit<input name="unit" list="dl-units" autocomplete="off" value="${esc(it.unit)}"></label>
       <label>Price (₱)<input name="price" inputmode="decimal" required autocomplete="off" value="${esc(it.price)}"></label>
       ${isNew ? '<label class="check span2"><input type="checkbox" name="again"> Add another after saving</label>' : ''}
+      ${isNew ? '' : `<div class="span2 price-history">
+        <div class="ph-head"><h4>Price history</h4>
+          <button type="button" class="btn small" data-revert>${icon('undo')}<span>Revert to original price</span></button></div>
+        <div data-history></div>
+      </div>`}
     </div>
     <datalist id="dl-types">${itemTypes().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
     <datalist id="dl-brands">${[...new Set(state.items.map((i) => i.brand).filter(Boolean))].sort().map((b) => `<option value="${esc(b)}">`).join('')}</datalist>
@@ -66,20 +76,45 @@ export function openItemForm(item = null, { onSaved } = {}) {
       });
       rm.addEventListener('click', () => { image = ''; refresh(); });
       dlg._resetPhoto = () => { image = ''; refresh(); };
+
+      if (!current) return;
+      const historyBox = dlg.querySelector('[data-history]');
+      const revertBtn = dlg.querySelector('[data-revert]');
+      const showHistory = () => {
+        historyBox.innerHTML = priceHistoryHTML(current);
+        revertBtn.disabled = !isPriceChanged(current);
+      };
+      const savePrice = (price, source, note) => {
+        current = { ...withPrice(current, price, source, note), updatedAt: Date.now() };
+        const { id, ...data } = current;
+        store.set('items', id, data);
+        dlg.querySelector('[name=price]').value = current.price;
+        showHistory();
+        toast(`Price set to ${money(current.price)}`);
+      };
+      revertBtn.addEventListener('click', () => savePrice(originalPrice(current), 'revert'));
+      historyBox.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-restore]');
+        if (b) savePrice(priceHistoryOf(current)[Number(b.dataset.restore)].price, 'restore');
+      });
+      showHistory();
     },
     onSubmit: (form) => {
       const f = Object.fromEntries(new FormData(form));
-      const data = {
+      const fields = {
         type: f.type.trim(),
         code: f.code.trim(),
         brand: f.brand.trim(),
         description: f.description.trim(),
         unit: f.unit.trim() || 'pcs',
-        price: round2(parseNum(f.price)),
         image,
         createdAt: item?.createdAt || Date.now(),
         updatedAt: Date.now(),
       };
+      const price = round2(parseNum(f.price));
+      const data = isNew
+        ? withInitialPrice({ ...fields, price })
+        : (({ id: _id, ...rest }) => rest)(withPrice({ ...current, ...fields }, price, 'edit'));
       let id = item?.id;
       if (isNew) id = store.add('items', data);
       else store.set('items', id, data);
@@ -133,9 +168,10 @@ function importDialog() {
       const now = Date.now();
       const entries = parsed.items.map((data) => {
         const existing = form.update.checked && data.code ? byCode.get(data.code.toLowerCase()) : null;
-        return existing
-          ? { id: existing.id, data: { ...existing, ...data, id: undefined, createdAt: existing.createdAt || now, updatedAt: now } }
-          : { data: { ...data, createdAt: now, updatedAt: now } };
+        if (!existing) return { data: withInitialPrice({ ...data, createdAt: now, updatedAt: now }, now) };
+        const { id, ...rest } = existing;
+        const { price, ...fields } = data;
+        return { id, data: { ...withPrice({ ...rest, ...fields }, price, 'import'), createdAt: existing.createdAt || now, updatedAt: now } };
       });
       await store.setMany('items', entries);
       const updated = entries.filter((e) => e.id).length;
@@ -194,8 +230,9 @@ function adjustDialog(items) {
         return round2(Math.round(p / s) * s);
       };
       const now = Date.now();
+      const note = `${pct > 0 ? '+' : ''}${num(pct)}%`;
       await store.setMany('items', items.map(({ id, ...data }) => ({
-        id, data: { ...data, price: roundTo((Number(data.price) || 0) * (1 + pct / 100)), updatedAt: now },
+        id, data: { ...withPrice(data, roundTo((Number(data.price) || 0) * (1 + pct / 100)), 'bulk', note), updatedAt: now },
       })));
       toast(`Updated ${items.length} prices`);
       return true;
@@ -226,6 +263,7 @@ export function mount(root) {
         <option value="recent">Recently changed</option>
       </select>
       <button class="btn ghost" data-act="adjust" title="Adjust prices of the items shown">${icon('percent')}<span>Adjust prices</span></button>
+      <button class="btn ghost" data-act="revert-all" title="Set the items shown back to their original prices">${icon('undo')}<span>Revert to original</span></button>
     </div>
     <div class="chips" data-chips></div>
     <div class="item-list" data-list></div>
@@ -274,7 +312,8 @@ export function mount(root) {
         <span class="ir-code mono">${esc(i.code)}</span>
         <span class="ir-desc">${esc(i.description)}</span>
         <span class="ir-brand muted">${esc(i.brand)}</span>
-        <span class="ir-price num"><b>${esc(money(i.price))}</b><small class="muted"> / ${esc(i.unit || 'pcs')}</small></span>
+        <span class="ir-price num"><b>${esc(money(i.price))}</b><small class="muted"> / ${esc(i.unit || 'pcs')}</small>
+          ${isPriceChanged(i) ? `<small class="was" title="Original price">was ${esc(money(originalPrice(i)))}</small>` : ''}</span>
         <span class="ir-actions">
           <button class="icon-btn" data-dup="${esc(i.id)}" title="Duplicate" aria-label="Duplicate">${icon('copy')}</button>
           <button class="icon-btn" data-del="${esc(i.id)}" title="Delete" aria-label="Delete">${icon('trash')}</button>
@@ -289,9 +328,23 @@ export function mount(root) {
     if (act === 'new') return openItemForm(type ? { type } : null);
     if (act === 'import') return importDialog();
     if (act === 'adjust') return shown.length ? adjustDialog(shown) : toast('No items to adjust');
+    if (act === 'revert-all') {
+      const changed = shown.filter(isPriceChanged);
+      if (!changed.length) return toast('All items shown already have their original price');
+      const ok = await confirmDialog(
+        `Set ${changed.length} item${changed.length === 1 ? '' : 's'} back to the original price? The change is recorded in each item's price history.`,
+        { title: 'Revert to original prices', ok: 'Revert', danger: false },
+      );
+      if (!ok) return;
+      const now = Date.now();
+      await store.setMany('items', changed.map(({ id, ...data }) => ({
+        id, data: { ...withPrice(data, originalPrice(data), 'revert'), updatedAt: now },
+      })));
+      return toast(`Reverted ${changed.length} price${changed.length === 1 ? '' : 's'}`);
+    }
     if (act === 'sample') {
       const now = Date.now();
-      await store.setMany('items', SAMPLE_ITEMS.map((data) => ({ data: { ...data, createdAt: now, updatedAt: now } })));
+      await store.setMany('items', SAMPLE_ITEMS.map((data) => ({ data: withInitialPrice({ ...data, createdAt: now, updatedAt: now }, now) })));
       return toast('Sample parts added');
     }
     if (act === 'export') {

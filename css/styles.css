@@ -637,3 +637,31 @@ table.mini th, table.mini td { padding: 5px 8px; border-bottom: 1px solid var(--
   .pg-table tr, .pg-card, .pg-totals, .pg-client { break-inside: avoid; }
   .pg-foot { margin-top: 24px; }
 }
+
+/* ============ price history ============ */
+.was { display: block; font-size: 11.5px; color: var(--muted); text-decoration: line-through; }
+.price-history { border-top: 1px solid var(--border); padding-top: 12px; }
+.ph-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.ph-head h4 { margin: 0; }
+.ph-summary { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; margin-bottom: 8px; color: var(--text); }
+.ph-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ph-table td { padding: 8px 6px; border-top: 1px solid var(--border); vertical-align: top; color: var(--text); }
+.ph-table tr.ph-current td { background: color-mix(in srgb, var(--primary) 6%, transparent); }
+.ph-when { white-space: nowrap; color: var(--muted) !important; font-size: 12.5px; }
+.ph-src .pill { margin-left: 6px; }
+.ph-act { text-align: right; width: 1%; }
+.ph-diff { font-size: 11.5px; font-weight: 600; }
+.ph-diff.up { color: var(--danger); }
+.ph-diff.down { color: var(--ok); }
+.sel-bar [data-sel=price] { position: relative; }
+.sel-bar [data-sel=price].changed::after {
+  content: ''; position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: #f79009;
+}
+@media (max-width: 760px) {
+  .ph-when { white-space: normal; }
+  .ph-head { flex-wrap: wrap; }
+}
+@media (max-width: 440px) {
+  .sel-label { display: none; }
+  .sel-bar button { width: 38px; }
+}

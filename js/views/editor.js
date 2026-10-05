@@ -2,7 +2,7 @@
 import * as store from '../store.js';
 import { state, onChange, itemTypes } from '../state.js';
 import {
-  esc, icon, money, toast, debounce, parseNum, round2, getPath, setPath, confirmDialog, imageToDataURL,
+  esc, icon, money, num, modal, toast, debounce, parseNum, round2, getPath, setPath, confirmDialog, imageToDataURL,
 } from '../ui.js';
 import {
   KIND_LABEL, STATUSES, FONTS, TEMPLATES, SWATCHES, normalizeOffer, lineFromItem, blankLine,
@@ -10,6 +10,9 @@ import {
 } from '../model.js';
 import { renderPage, formatField, imageMap } from '../page.js';
 import { filterItems, openItemForm } from './items.js';
+import {
+  withPrice, withInitialPrice, originalPrice, isPriceChanged, priceHistoryOf, priceHistoryHTML,
+} from '../prices.js';
 
 const PAGE_W = 794; // A4 width at 96 dpi
 const PICK_LIMIT = 150;
@@ -59,6 +62,7 @@ export function mount(root, id) {
           <button data-sel="up" title="Move up" aria-label="Move up">${icon('up')}</button>
           <button data-sel="down" title="Move down" aria-label="Move down">${icon('down')}</button>
           <button data-sel="dup" title="Duplicate line" aria-label="Duplicate line">${icon('copy')}</button>
+          <button data-sel="price" title="Price history and revert" aria-label="Price history">${icon('tag')}</button>
           <button data-sel="save-item" title="Save to item database" aria-label="Save to item database">${icon('save')}</button>
           <button data-sel="del" title="Remove line" aria-label="Remove line">${icon('trash')}</button>
           <button data-sel="none" title="Done" aria-label="Deselect">${icon('check')}</button>
@@ -199,7 +203,37 @@ export function mount(root, id) {
     if (!line) return;
     const n = offer.lines.indexOf(line) + 1;
     $('[data-sel-label]').textContent = `Line ${n} of ${offer.lines.length}`;
+    selbar.querySelector('[data-sel=price]').classList.toggle('changed', isPriceChanged(line));
     selbar.querySelector('[data-sel=save-item]').hidden = Boolean(line.itemId && state.items.some((i) => i.id === line.itemId));
+  }
+
+  /** Sets a line's price and records the change in its history. */
+  function setLinePrice(l, price, source, note) {
+    const base = l.priceHistory?.length || l.itemId ? l : withInitialPrice(l);
+    Object.assign(l, withPrice(base, price, source, note));
+  }
+
+  function linePriceDialog(l) {
+    const { dlg, close } = modal({
+      title: 'Price history',
+      wide: true,
+      submit: isPriceChanged(l) ? 'Revert to original price' : '',
+      body: `<p class="muted">${esc(l.description || 'This line')}${l.code ? ` (${esc(l.code)})` : ''}. Changes made in this document.</p>
+        ${priceHistoryHTML(l)}`,
+      onSubmit: () => {
+        setLinePrice(l, originalPrice(l), 'revert');
+        renderAll(); changed();
+        toast(`Price reverted to ${money(l.price)}`);
+      },
+    });
+    dlg.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-restore]');
+      if (!b) return;
+      setLinePrice(l, priceHistoryOf(l)[Number(b.dataset.restore)].price, 'restore');
+      renderAll(); changed();
+      toast(`Price set to ${money(l.price)}`);
+      close();
+    });
   }
 
   function lineAction(action) {
@@ -217,6 +251,8 @@ export function mount(root, id) {
       lines.splice(i, 1);
       selected = null;
       toast('Line removed. Undo is in the top bar.');
+    } else if (action === 'price') {
+      return linePriceDialog(lines[i]);
     } else if (action === 'save-item') {
       const l = lines[i];
       openItemForm({ type: l.type, code: l.code, brand: l.brand, description: l.description, unit: l.unit, price: l.price }, {
@@ -287,6 +323,8 @@ export function mount(root, id) {
           <button class="btn small" data-act="refresh-prices" title="Copy current database prices into this document">${icon('refresh')}<span>Update prices</span></button>
           <button class="btn small" data-act="global-discount">${icon('percent')}<span>Discount all</span></button>
         </div>
+        <button class="btn small" data-act="revert-lines">${icon('undo')}<span>Revert all to original prices</span></button>
+        <p class="muted small">Select a line on the page and tap ${icon('tag')} to see its price history.</p>
         <h4>Document</h4>
         <div class="row2">
           <button class="btn small" data-act="duplicate">${icon('copy')}<span>Duplicate</span></button>
@@ -493,11 +531,24 @@ export function mount(root, id) {
       openItemForm(ptype ? { type: ptype } : null, { onSaved: (item) => addItem(item) });
       return;
     }
+    if (act === 'revert-lines') {
+      const changedLines = offer.lines.filter(isPriceChanged);
+      if (!changedLines.length) { toast('All lines already have their original price'); return; }
+      const ok = await confirmDialog(
+        `Set ${changedLines.length} line${changedLines.length === 1 ? '' : 's'} back to the price they were added with? Each change is kept in the line's price history.`,
+        { title: 'Revert to original prices', ok: 'Revert', danger: false },
+      );
+      if (!ok) return;
+      changedLines.forEach((l) => setLinePrice(l, originalPrice(l), 'revert'));
+      renderAll(); changed();
+      toast(`Reverted ${changedLines.length} price${changedLines.length === 1 ? '' : 's'}`);
+      return;
+    }
     if (act === 'refresh-prices') {
       let n = 0;
       for (const l of offer.lines) {
         const item = l.itemId && state.items.find((i) => i.id === l.itemId);
-        if (item && Number(item.price) !== Number(l.price)) { l.price = Number(item.price) || 0; n++; }
+        if (item && Number(item.price) !== Number(l.price)) { setLinePrice(l, Number(item.price) || 0, 'database'); n++; }
       }
       if (n) { renderAll(); changed(); }
       toast(n ? `Updated ${n} price${n === 1 ? '' : 's'}` : 'All prices are already current');
@@ -512,7 +563,7 @@ export function mount(root, id) {
         offer.design.showDiscount = pct > 0 || offer.design.showDiscount;
       } else {
         // Price lists have no discount column: apply it to the listed prices.
-        offer.lines.forEach((l) => { l.price = round2(l.price * (1 - pct / 100)); });
+        offer.lines.forEach((l) => setLinePrice(l, round2(l.price * (1 - pct / 100)), 'bulk', `-${num(pct)}%`));
       }
       renderAll(); renderPanel(); changed();
     }
@@ -556,6 +607,7 @@ export function mount(root, id) {
     if (t.matches('input[data-fmt]')) {
       const l = offer.lines.find((x) => x.id === t.dataset.line);
       if (l) t.value = String(Number(l[t.dataset.field]) || 0);
+      if (l && t.dataset.field === 'price') t.dataset.before = String(Number(l.price) || 0);
       t.select();
     }
     const row = t.closest('[data-row]');
@@ -566,7 +618,20 @@ export function mount(root, id) {
     const t = e.target;
     if (t.matches('input[data-fmt]')) {
       const l = offer.lines.find((x) => x.id === t.dataset.line);
-      if (l) t.value = formatField(t.dataset.fmt, l[t.dataset.field]);
+      if (!l) return;
+      if (t.dataset.field === 'price' && t.dataset.before !== undefined) {
+        const before = Number(t.dataset.before);
+        delete t.dataset.before;
+        if (round2(before) !== round2(l.price)) {
+          const now = round2(l.price);
+          const base = l.priceHistory?.length ? l : { ...l, price: before };
+          if (!l.priceHistory?.length && !l.itemId && !before) Object.assign(l, withInitialPrice({ ...l, price: now }));
+          else Object.assign(l, withPrice(base, now, 'document'));
+          syncSelection();
+          changed();
+        }
+      }
+      t.value = formatField(t.dataset.fmt, l[t.dataset.field]);
       return;
     }
     if (t.isContentEditable) {

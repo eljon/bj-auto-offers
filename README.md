@@ -12,6 +12,9 @@ No build step: plain HTML, CSS and JavaScript modules.
   comma/semicolon/tab, updates existing items by code) and CSV export, bulk price adjustment by percentage with rounding.
 - **Canvas editor**: A4 page with zoom, click any text on the page to edit it, edit quantities, prices and
   discounts directly in the table, select a line to move, duplicate, remove, or save it to the database. Undo/redo.
+- **Price history**: every price change (edits, CSV imports, bulk adjustments, reverts) is kept with date and
+  source, for items in the database and for lines inside each document. "Revert to original price" per item,
+  per line, or for all shown items / all lines at once, and any earlier price can be restored from the history.
 - **Two document kinds**: offers (quantities, discounts, subtotal, VAT, total, customer block) and price lists
   (grouped by product type, no quantities).
 - **Design panel**: Classic, Bold, Minimal and **Parts Catalog** templates (Parts Catalog: slanted header band,
@@ -69,7 +72,7 @@ To move data from demo mode: Settings > Download backup while in demo mode, then
 
 | Collection | Document | Fields |
 | --- | --- | --- |
-| `items` | auto id | `type` (item name), `code` (part number), `brand`, `description` (application), `unit`, `price`, `image` (JPEG data URL), `createdAt`, `updatedAt` |
+| `items` | auto id | `type` (item name), `code` (part number), `brand`, `description` (application), `unit`, `price`, `priceHistory[]` (`price`, `at`, `source`, `note`), `image` (JPEG data URL), `createdAt`, `updatedAt` |
 | `offers` | auto id | `kind` (`offer` / `pricelist`), `title`, `number`, `date`, `validDays`, `status`, `intro`, `client {company, name, details}`, `lines[]`, `notes`, `currency`, `vatRate`, `design {...}`, `total`, `createdAt`, `updatedAt` |
 | `meta` | `settings` | company profile, `logo` (data URL), defaults, `nextNumber` |
 
